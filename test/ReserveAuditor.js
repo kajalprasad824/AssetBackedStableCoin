@@ -7,9 +7,11 @@ const { ethers, upgrades } = require("hardhat");
 describe("Reserve Auditor contract Deployment", function () {
   async function deployAuditorFixture() {
     const [defaultAdmin] = await ethers.getSigners();
-    const reserveAuditor = await ethers.deployContract("ReserveAuditor");
-
-    reserveAuditor.initialize(defaultAdmin.address);
+    
+    const reserveAuditorContract = await ethers.getContractFactory("ReserveAuditor");
+    const reserveAuditor = await upgrades.deployProxy(reserveAuditorContract,[defaultAdmin.address], {
+        initializer: "initialize",
+    })
 
     const DEFAULT_ADMIN_ROLE = await reserveAuditor.DEFAULT_ADMIN_ROLE();
 
@@ -33,9 +35,10 @@ describe("Set Stable Coin Address Function", function () {
   async function deployAuditorFixture() {
     const [defaultAdmin, manager, stablecoin, addr1] =
       await ethers.getSigners();
-    const reserveAuditor = await ethers.deployContract("ReserveAuditor");
-
-    reserveAuditor.initialize(defaultAdmin.address);
+      const reserveAuditorContract = await ethers.getContractFactory("ReserveAuditor");
+      const reserveAuditor = await upgrades.deployProxy(reserveAuditorContract,[defaultAdmin.address], {
+          initializer: "initialize",
+      })
 
     const MANAGER_ROLE = await reserveAuditor.MANAGER_ROLE();
     await reserveAuditor
@@ -81,9 +84,10 @@ describe("Record Reserve Function", function () {
     async function deployAuditorFixture() {
       const [defaultAdmin, manager, stablecoin, addr1] =
         await ethers.getSigners();
-      const reserveAuditor = await ethers.deployContract("ReserveAuditor");
-  
-      reserveAuditor.initialize(defaultAdmin.address);
+        const reserveAuditorContract = await ethers.getContractFactory("ReserveAuditor");
+        const reserveAuditor = await upgrades.deployProxy(reserveAuditorContract,[defaultAdmin.address], {
+            initializer: "initialize",
+        })
   
       const MANAGER_ROLE = await reserveAuditor.MANAGER_ROLE();
       await reserveAuditor
@@ -173,9 +177,10 @@ describe("Verify Reserve Function", function () {
     async function deployAuditorFixture() {
       const [defaultAdmin, manager, stablecoin] =
         await ethers.getSigners();
-      const reserveAuditor = await ethers.deployContract("ReserveAuditor");
-  
-      reserveAuditor.initialize(defaultAdmin.address);
+        const reserveAuditorContract = await ethers.getContractFactory("ReserveAuditor");
+        const reserveAuditor = await upgrades.deployProxy(reserveAuditorContract,[defaultAdmin.address], {
+            initializer: "initialize",
+        })
   
       const MANAGER_ROLE = await reserveAuditor.MANAGER_ROLE();
       await reserveAuditor

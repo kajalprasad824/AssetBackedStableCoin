@@ -1,4 +1,6 @@
+require('@openzeppelin/hardhat-upgrades');
 require("@nomicfoundation/hardhat-toolbox");
+require('dotenv').config()
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {

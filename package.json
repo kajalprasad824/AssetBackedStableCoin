@@ -13,7 +13,9 @@
     "hardhat": "^2.22.16"
   },
   "dependencies": {
+    "@nomiclabs/hardhat-etherscan": "^3.1.8",
     "@openzeppelin/contracts-upgradeable": "^5.1.0",
-    "@openzeppelin/hardhat-upgrades": "^3.5.0"
+    "@openzeppelin/hardhat-upgrades": "^3.5.0",
+    "dotenv": "^16.4.5"
   }
 }
