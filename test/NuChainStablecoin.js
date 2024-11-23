@@ -1056,3 +1056,115 @@ describe("Wipe Frozen Address Function", function () {
   });
 
 });
+
+describe("Set Transaction Fee Function", function () {
+  async function deployStableCoinFixture() {
+    const gas = (await ethers.provider.getFeeData()).gasPrice;
+    const [defaultAdmin, admin, treasuryRole, otherRole] =
+      await ethers.getSigners();
+
+    const reserveAuditorContract = await ethers.getContractFactory(
+      "ReserveAuditor"
+    );
+    const reserveAuditor = await upgrades.deployProxy(
+      reserveAuditorContract,
+      [defaultAdmin.address],
+      {
+        gasPrice: gas,
+        initializer: "initialize",
+      }
+    );
+
+    const stableCoinContract = await ethers.getContractFactory(
+      "NuChainStablecoin"
+    );
+
+    const reserveAuditorAddress = await reserveAuditor.getAddress();
+    const stableCoin = await upgrades.deployProxy(
+      stableCoinContract,
+      [defaultAdmin.address, reserveAuditorAddress, defaultAdmin.address],
+      {
+        gasPrice: gas,
+        initializer: "initialize",
+      }
+    );
+
+    const ADMIN_ROLE = await stableCoin.ADMIN_ROLE();
+    await stableCoin.connect(defaultAdmin).grantRole(ADMIN_ROLE, admin.address);
+
+    const TREASURY_ROLE = await stableCoin.TREASURY_ROLE();
+    await stableCoin
+      .connect(defaultAdmin)
+      .grantRole(TREASURY_ROLE, treasuryRole.address);
+
+    return {
+      defaultAdmin,
+      admin,
+      otherRole,
+      stableCoin,
+      treasuryRole,
+    };
+  }
+
+  it("Should allow default admin to set transaction fee", async function () {
+    const { defaultAdmin, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(defaultAdmin).setTransactionFee(500);
+    expect (await stableCoin.transactionFeePercentage()).to.equal(500);
+    
+  });
+
+  it("Should allow admin to set transaction fee", async function () {
+    const { admin, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(admin).setTransactionFee(500);
+    expect (await stableCoin.transactionFeePercentage()).to.equal(500);
+  });
+
+  it("Should allow treasury role to set transaction fee", async function () {
+    const { treasuryRole, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(treasuryRole).setTransactionFee(500);
+    expect (await stableCoin.transactionFeePercentage()).to.equal(500);
+  });
+
+  it("should not allow unauthorized users to set transaction fee", async () => {
+    const { otherRole, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+
+    await expect (stableCoin.connect(otherRole).setTransactionFee(500)).to.be.revertedWith("Not Authorize to call this function");
+
+  });
+
+  it("Should correctly emit FeePercentageUpdated  event", async () => {
+    const {stableCoin } = await loadFixture(deployStableCoinFixture);
+    
+    await expect(stableCoin.setTransactionFee(500)).to.emit(
+      stableCoin,
+      "FeePercentageUpdated"
+    );
+  });
+
+  it("should revert if fee percentage is greater than 10%", async () => {
+    const {stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+
+    await expect (stableCoin.setTransactionFee(10000)).to.be.revertedWith("Fee cannot exceed 10%");
+
+  });
+
+  it("Should correctly update transaction fee percentage", async function () {
+    const { treasuryRole, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+    
+    await stableCoin.connect(treasuryRole).setTransactionFee(500);
+    expect (await stableCoin.transactionFeePercentage()).to.equal(500);
+  });
+
+});
