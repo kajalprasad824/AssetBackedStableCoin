@@ -920,3 +920,139 @@ describe("Unfreeze Function", function () {
     expect(await stableCoin._frozen(addr2.address)).to.be.false;
   });
 });
+
+describe("Wipe Frozen Address Function", function () {
+  async function deployStableCoinFixture() {
+    const gas = (await ethers.provider.getFeeData()).gasPrice;
+    const [defaultAdmin, admin, assetProtectionRole, otherRole, addr1, addr2] =
+      await ethers.getSigners();
+
+    const reserveAuditorContract = await ethers.getContractFactory(
+      "ReserveAuditor"
+    );
+    const reserveAuditor = await upgrades.deployProxy(
+      reserveAuditorContract,
+      [defaultAdmin.address],
+      {
+        gasPrice: gas,
+        initializer: "initialize",
+      }
+    );
+
+    const stableCoinContract = await ethers.getContractFactory(
+      "NuChainStablecoin"
+    );
+
+    const reserveAuditorAddress = await reserveAuditor.getAddress();
+    const stableCoin = await upgrades.deployProxy(
+      stableCoinContract,
+      [defaultAdmin.address, reserveAuditorAddress, defaultAdmin.address],
+      {
+        gasPrice: gas,
+        initializer: "initialize",
+      }
+    );
+
+    const ADMIN_ROLE = await stableCoin.ADMIN_ROLE();
+    await stableCoin.connect(defaultAdmin).grantRole(ADMIN_ROLE, admin.address);
+
+    const ASSET_PROTECTION_ROLE = await stableCoin.ASSET_PROTECTION_ROLE();
+    await stableCoin
+      .connect(defaultAdmin)
+      .grantRole(ASSET_PROTECTION_ROLE, assetProtectionRole.address);
+
+      await stableCoin.connect(defaultAdmin).transfer(addr1.address,1000000000000);
+      await stableCoin.connect(defaultAdmin).freeze(addr1.address);
+
+    return {
+      defaultAdmin,
+      admin,
+      otherRole,
+      addr1,
+      addr2,
+      stableCoin,
+      assetProtectionRole,
+    };
+  }
+
+  it("Should allow default admin to wipe a frozen account", async function () {
+    const { defaultAdmin, stableCoin, addr1 } = await loadFixture(
+      deployStableCoinFixture
+    );
+    const balance = await stableCoin.balanceOf(addr1.address);
+    const totalSupply = await stableCoin.totalSupply();
+    const remainTotalSupply =  totalSupply - balance;
+    await stableCoin.connect(defaultAdmin).wipeFrozenAddress(addr1.address);
+
+    expect(await stableCoin.balanceOf(addr1.address)).to.equal(0);
+    expect(await stableCoin.totalSupply()).to.equal(remainTotalSupply);
+    
+  });
+
+  it("Should allow admin to wipe a frozen account", async function () {
+    const { admin, stableCoin, addr1 } = await loadFixture(
+      deployStableCoinFixture
+    );
+    const balance = await stableCoin.balanceOf(addr1.address);
+    const totalSupply = await stableCoin.totalSupply();
+    const remainTotalSupply =  totalSupply - balance;
+    await stableCoin.connect(admin).wipeFrozenAddress(addr1.address);
+
+    expect(await stableCoin.balanceOf(addr1.address)).to.equal(0);
+    expect(await stableCoin.totalSupply()).to.equal(remainTotalSupply);
+  });
+
+  it("Should allow asset protector role to wipe a frozen account", async function () {
+    const { assetProtectionRole, stableCoin, addr1 } = await loadFixture(
+      deployStableCoinFixture
+    );
+    const balance = await stableCoin.balanceOf(addr1.address);
+    const totalSupply = await stableCoin.totalSupply();
+    const remainTotalSupply =  totalSupply - balance;
+    await stableCoin.connect(assetProtectionRole).wipeFrozenAddress(addr1.address);
+
+    expect(await stableCoin.balanceOf(addr1.address)).to.equal(0);
+    expect(await stableCoin.totalSupply()).to.equal(remainTotalSupply);
+  });
+
+  it("should not allow unauthorized users to wipe a frozen account", async () => {
+    const { otherRole, stableCoin, addr1 } = await loadFixture(
+      deployStableCoinFixture
+    );
+
+    await expect (stableCoin.connect(otherRole).wipeFrozenAddress(addr1.address)).to.be.revertedWith("Not Authorize to call this function");
+
+  });
+
+  it("Should correctly emit FrozenAddressWiped  event", async () => {
+    const {stableCoin, addr1 } = await loadFixture(deployStableCoinFixture);
+    
+    await expect(stableCoin.wipeFrozenAddress(addr1.address)).to.emit(
+      stableCoin,
+      "FrozenAddressWiped"
+    );
+  });
+
+  it("Should not allow wiping an account that is not frozen", async function () {
+    const { admin, stableCoin, addr2 } = await loadFixture(
+      deployStableCoinFixture
+    );
+    
+    await expect(
+      stableCoin.connect(admin).wipeFrozenAddress(addr2.address)
+    ).to.be.revertedWith("Account is not frozen");
+  });
+
+  it("Should correctly reduce total supply when wiping a frozen account", async function () {
+    const { assetProtectionRole, stableCoin, addr1 } = await loadFixture(
+      deployStableCoinFixture
+    );
+    const balance = await stableCoin.balanceOf(addr1.address);
+    const totalSupply = await stableCoin.totalSupply();
+    const remainTotalSupply =  totalSupply - balance;
+    await stableCoin.connect(assetProtectionRole).wipeFrozenAddress(addr1.address);
+
+    expect(await stableCoin.totalSupply()).to.equal(remainTotalSupply);
+  });
+
+});
