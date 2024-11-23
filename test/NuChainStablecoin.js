@@ -551,15 +551,6 @@ describe("Update Reserves", function () {
     ).to.be.revertedWith("New Reserve value can't be equal to zero");
   });
 
-  it("Should revert if new reserves value is zero", async function () {
-    const { admin, stableCoin } = await loadFixture(
-      deployStableCoinFixture
-    );
-    await expect(
-      stableCoin.connect(admin).updateReserves(0)
-    ).to.be.revertedWith("New Reserve value can't be equal to zero");
-  });
-
   it("Should allow repeated updates to reserves with valid values", async function () {
     const { admin, stableCoin, reserveAmount } = await loadFixture(
       deployStableCoinFixture
@@ -570,5 +561,111 @@ describe("Update Reserves", function () {
     const reserveAmount2 = ethers.parseEther("600");
     await stableCoin.connect(admin).updateReserves(reserveAmount2);
     expect (await stableCoin.totalReserves()).to.equal(reserveAmount2);
+  });
+});
+
+describe("Set Reserve Ratio", function () {
+  async function deployStableCoinFixture() {
+    const gas = (await ethers.provider.getFeeData()).gasPrice;
+    const [defaultAdmin, admin, otherRole] = await ethers.getSigners();
+
+    const reserveAuditorContract = await ethers.getContractFactory(
+      "ReserveAuditor"
+    );
+    const reserveAuditor = await upgrades.deployProxy(
+      reserveAuditorContract,
+      [defaultAdmin.address],
+      {
+        gasPrice: gas,
+        initializer: "initialize",
+      }
+    );
+
+    const stableCoinContract = await ethers.getContractFactory(
+      "NuChainStablecoin"
+    );
+
+    const reserveAuditorAddress = await reserveAuditor.getAddress();
+    const stableCoin = await upgrades.deployProxy(
+      stableCoinContract,
+      [defaultAdmin.address, reserveAuditorAddress, defaultAdmin.address],
+      {
+        gasPrice: gas,
+        initializer: "initialize",
+      }
+    );
+
+    const ADMIN_ROLE = await stableCoin.ADMIN_ROLE();
+    await stableCoin.connect(defaultAdmin).grantRole(ADMIN_ROLE, admin.address);
+
+    const reserveRatio = ethers.parseEther("1");
+
+    return {
+      defaultAdmin,
+      admin,
+      otherRole,
+      stableCoin,
+      reserveRatio,
+    };
+  }
+
+  it("Should allow default admin to update reserves", async function () {
+    const { defaultAdmin, stableCoin, reserveRatio } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(defaultAdmin).setReserveRatio(reserveRatio);
+
+    expect(await stableCoin.reserveRatio()).to.equal(reserveRatio);
+  });
+
+  it("Should allow admin to update reserves", async function () {
+    const { admin, stableCoin, reserveRatio } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(admin).setReserveRatio(reserveRatio);
+
+    expect(await stableCoin.reserveRatio()).to.equal(reserveRatio);
+  });
+
+  it("should not allow unauthorized users to update reserves", async () => {
+    const { otherRole, stableCoin, reserveRatio } = await loadFixture(
+      deployStableCoinFixture
+    );
+
+    await expect(
+      stableCoin.connect(otherRole).setReserveRatio(reserveRatio)
+    ).to.be.revertedWith("Not Authorize to call this function");
+  });
+
+  it("Should correctly emit ReserveRatioUpdated event", async () => {
+    const { stableCoin, reserveRatio } = await loadFixture(
+      deployStableCoinFixture
+    );
+
+    await expect(stableCoin.setReserveRatio(reserveRatio)).to.emit(
+      stableCoin,
+      "ReserveRatioUpdated"
+    );
+  });
+
+  it("should not allow setting the reserve ratio to zero", async function () {
+    const { admin, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await expect(
+      stableCoin.connect(admin).setReserveRatio(0)
+    ).to.be.revertedWith("Reserve ratio must be greater than zero");
+  });
+
+  it("Should allow repeated valid updates to the reserve ratio", async function () {
+    const { admin, stableCoin, reserveRatio } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(admin).setReserveRatio(reserveRatio);
+    expect (await stableCoin.reserveRatio()).to.equal(reserveRatio);
+
+    const reserveRatio2 = ethers.parseEther("0.5");
+    await stableCoin.connect(admin).setReserveRatio(reserveRatio2);
+    expect (await stableCoin.reserveRatio()).to.equal(reserveRatio2);
   });
 });
