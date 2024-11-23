@@ -543,9 +543,7 @@ describe("Update Reserves", function () {
   });
 
   it("Should revert if new reserves value is zero", async function () {
-    const { admin, stableCoin } = await loadFixture(
-      deployStableCoinFixture
-    );
+    const { admin, stableCoin } = await loadFixture(deployStableCoinFixture);
     await expect(
       stableCoin.connect(admin).updateReserves(0)
     ).to.be.revertedWith("New Reserve value can't be equal to zero");
@@ -556,15 +554,15 @@ describe("Update Reserves", function () {
       deployStableCoinFixture
     );
     await stableCoin.connect(admin).updateReserves(reserveAmount);
-    expect (await stableCoin.totalReserves()).to.equal(reserveAmount);
+    expect(await stableCoin.totalReserves()).to.equal(reserveAmount);
 
     const reserveAmount2 = ethers.parseEther("600");
     await stableCoin.connect(admin).updateReserves(reserveAmount2);
-    expect (await stableCoin.totalReserves()).to.equal(reserveAmount2);
+    expect(await stableCoin.totalReserves()).to.equal(reserveAmount2);
   });
 });
 
-describe("Set Reserve Ratio", function () {
+describe("Set Reserve Ratio Function", function () {
   async function deployStableCoinFixture() {
     const gas = (await ethers.provider.getFeeData()).gasPrice;
     const [defaultAdmin, admin, otherRole] = await ethers.getSigners();
@@ -649,9 +647,7 @@ describe("Set Reserve Ratio", function () {
   });
 
   it("should not allow setting the reserve ratio to zero", async function () {
-    const { admin, stableCoin } = await loadFixture(
-      deployStableCoinFixture
-    );
+    const { admin, stableCoin } = await loadFixture(deployStableCoinFixture);
     await expect(
       stableCoin.connect(admin).setReserveRatio(0)
     ).to.be.revertedWith("Reserve ratio must be greater than zero");
@@ -662,10 +658,130 @@ describe("Set Reserve Ratio", function () {
       deployStableCoinFixture
     );
     await stableCoin.connect(admin).setReserveRatio(reserveRatio);
-    expect (await stableCoin.reserveRatio()).to.equal(reserveRatio);
+    expect(await stableCoin.reserveRatio()).to.equal(reserveRatio);
 
     const reserveRatio2 = ethers.parseEther("0.5");
     await stableCoin.connect(admin).setReserveRatio(reserveRatio2);
-    expect (await stableCoin.reserveRatio()).to.equal(reserveRatio2);
+    expect(await stableCoin.reserveRatio()).to.equal(reserveRatio2);
+  });
+});
+
+describe("Freeze Function", function () {
+  async function deployStableCoinFixture() {
+    const gas = (await ethers.provider.getFeeData()).gasPrice;
+    const [defaultAdmin, admin, assetProtectionRole, otherRole, addr1, addr2] =
+      await ethers.getSigners();
+
+    const reserveAuditorContract = await ethers.getContractFactory(
+      "ReserveAuditor"
+    );
+    const reserveAuditor = await upgrades.deployProxy(
+      reserveAuditorContract,
+      [defaultAdmin.address],
+      {
+        gasPrice: gas,
+        initializer: "initialize",
+      }
+    );
+
+    const stableCoinContract = await ethers.getContractFactory(
+      "NuChainStablecoin"
+    );
+
+    const reserveAuditorAddress = await reserveAuditor.getAddress();
+    const stableCoin = await upgrades.deployProxy(
+      stableCoinContract,
+      [defaultAdmin.address, reserveAuditorAddress, defaultAdmin.address],
+      {
+        gasPrice: gas,
+        initializer: "initialize",
+      }
+    );
+
+    const ADMIN_ROLE = await stableCoin.ADMIN_ROLE();
+    await stableCoin.connect(defaultAdmin).grantRole(ADMIN_ROLE, admin.address);
+
+    const ASSET_PROTECTION_ROLE = await stableCoin.ASSET_PROTECTION_ROLE();
+    await stableCoin
+      .connect(defaultAdmin)
+      .grantRole(ASSET_PROTECTION_ROLE, assetProtectionRole.address);
+
+    return {
+      defaultAdmin,
+      admin,
+      otherRole,
+      addr1,
+      addr2,
+      stableCoin,
+      assetProtectionRole
+    };
+  }
+
+  it("Should allow default admin to update reserves", async function () {
+    const { defaultAdmin, stableCoin, addr1 } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(defaultAdmin).freeze(addr1.address);
+
+    expect(await stableCoin._frozen(addr1.address)).to.be.true;
+  });
+
+  it("Should allow admin to update reserves", async function () {
+    const { admin, stableCoin, addr1 } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(admin).freeze(addr1.address);
+
+    expect(await stableCoin._frozen(addr1.address)).to.be.true;
+  });
+
+  it("Should allow asset protector role to update reserves", async function () {
+    const {assetProtectionRole, stableCoin, addr1 } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(assetProtectionRole).freeze(addr1.address);
+
+    expect(await stableCoin._frozen(addr1.address)).to.be.true;
+  });
+
+  it("should not allow unauthorized users to update reserves", async () => {
+    const { otherRole, stableCoin, addr1 } = await loadFixture(
+      deployStableCoinFixture
+    );
+
+    await expect(
+      stableCoin.connect(otherRole).freeze(addr1.address)
+    ).to.be.revertedWith("Not Authorize to call this function");
+  });
+
+  it("Should correctly emit AddressFrozen event", async () => {
+    const { stableCoin, addr1 } = await loadFixture(deployStableCoinFixture);
+
+    await expect(stableCoin.freeze(addr1.address)).to.emit(
+      stableCoin,
+      "AddressFrozen"
+    );
+  });
+
+  it("should not allow freezing an already frozen account", async function () {
+    const { admin, stableCoin, addr1 } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(admin).freeze(addr1.address);
+    await expect(
+      stableCoin.connect(admin).freeze(addr1.address)
+    ).to.be.revertedWith("Account already frozen");
+  });
+
+  it("Should handle freezing multiple accounts correctly", async function () {
+    const { admin, stableCoin, addr1, addr2 } = await loadFixture(
+      deployStableCoinFixture
+    );
+
+    await stableCoin.connect(admin).freeze(addr1.address);
+    await stableCoin.connect(admin).freeze(addr2.address);
+
+    expect(await stableCoin._frozen(addr1.address)).to.be.true;
+    expect(await stableCoin._frozen(addr2.address)).to.be.true;
   });
 });
