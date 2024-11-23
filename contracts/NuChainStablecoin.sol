@@ -326,7 +326,7 @@ contract NuChainStablecoin is Initializable, ERC20Upgradeable, ERC20BurnableUpgr
         uint256 requiredReserve = amount.mul(reserveRatio).div(1e18);
         require(totalReserves >= requiredReserve, "Insufficient reserves");
         require(
-            reserveAuditor.verifyReserves(requiredReserve),
+            reserveAuditor.verifyReserves(requiredReserve + totalSupply()),
             "Reserve verification failed"
         );
 
@@ -526,3 +526,8 @@ contract NuChainStablecoin is Initializable, ERC20Upgradeable, ERC20BurnableUpgr
         super._update(from, to, value);
     }
 }
+//USDT
+//USDC
+//BUSD
+//Binance
+//Ethereum
