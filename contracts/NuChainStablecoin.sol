@@ -286,7 +286,7 @@ contract NuChainStablecoin is
     );
 
     // Freezing functionality
-    mapping(address => bool) private _frozen;
+    mapping(address => bool) public _frozen;
 
     // Fee mechanism
     uint256 public transactionFeePercentage; // Fee percentage in basis points (e.g., 100 = 1%)
