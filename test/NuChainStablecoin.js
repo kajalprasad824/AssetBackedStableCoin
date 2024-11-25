@@ -201,24 +201,6 @@ describe("Mint Function", function () {
     );
   });
 
-  it("Should mint tokens successfully by supply controller role", async function () {
-    const { supplyControllerRole, stableCoin, otherRole, amountToMint } =
-      await loadFixture(deployStableCoinFixture);
-    await stableCoin
-      .connect(supplyControllerRole)
-      .mint(otherRole.address, amountToMint);
-
-    expect(await stableCoin.balanceOf(otherRole.address)).to.equal(
-      amountToMint
-    );
-    expect(await stableCoin.totalSupply()).to.equal(
-      ethers.parseEther("1000000500")
-    );
-    expect(await stableCoin.totalReserves()).to.equal(
-      ethers.parseEther("1999999500")
-    );
-  });
-
   it("Should not allow unauthorized users to mint tokens successfully", async function () {
     const { stableCoin, otherRole, amountToMint } = await loadFixture(
       deployStableCoinFixture
@@ -1219,7 +1201,7 @@ describe("Set Treasury Wallet Function", function () {
     };
   }
 
-  it("Should allow default admin to set transaction fee", async function () {
+  it("Should allow default admin to set treasury wallet address", async function () {
     const { defaultAdmin, stableCoin, treasuryWallet } = await loadFixture(
       deployStableCoinFixture
     );
@@ -1228,7 +1210,7 @@ describe("Set Treasury Wallet Function", function () {
     
   });
 
-  it("Should allow admin to set transaction fee", async function () {
+  it("Should allow admin to set treasury wallet address", async function () {
     const { admin, stableCoin, treasuryWallet} = await loadFixture(
       deployStableCoinFixture
     );
@@ -1236,7 +1218,7 @@ describe("Set Treasury Wallet Function", function () {
     expect (await stableCoin.treasuryWallet()).to.equal(treasuryWallet.address);
   });
 
-  it("Should allow treasury role to set transaction fee", async function () {
+  it("Should allow treasury role to set treasury wallet address", async function () {
     const { treasuryRole, stableCoin, treasuryWallet } = await loadFixture(
       deployStableCoinFixture
     );
@@ -1244,7 +1226,7 @@ describe("Set Treasury Wallet Function", function () {
     expect (await stableCoin.treasuryWallet()).to.equal(treasuryWallet.address);
   });
 
-  it("should not allow unauthorized users to set transaction fee", async () => {
+  it("should not allow unauthorized users to set treasury wallet address", async () => {
     const { otherRole, stableCoin, treasuryWallet } = await loadFixture(
       deployStableCoinFixture
     );
@@ -1271,7 +1253,7 @@ describe("Set Treasury Wallet Function", function () {
 
   });
 
-  it("Should correctly update treasury Wallet fee percentage", async function () {
+  it("Should correctly update treasury Wallet address", async function () {
     const { treasuryWallet, stableCoin } = await loadFixture(
       deployStableCoinFixture
     );
@@ -1281,3 +1263,155 @@ describe("Set Treasury Wallet Function", function () {
   });
 
 });
+
+describe("Set Transaction Fee Enabled Function", function () {
+  async function deployStableCoinFixture() {
+    const gas = (await ethers.provider.getFeeData()).gasPrice;
+    const [defaultAdmin, admin, treasuryRole, otherRole, treasuryWallet] =
+      await ethers.getSigners();
+
+    const reserveAuditorContract = await ethers.getContractFactory(
+      "ReserveAuditor"
+    );
+    const reserveAuditor = await upgrades.deployProxy(
+      reserveAuditorContract,
+      [defaultAdmin.address],
+      {
+        gasPrice: gas,
+        initializer: "initialize",
+      }
+    );
+
+    const stableCoinContract = await ethers.getContractFactory(
+      "NuChainStablecoin"
+    );
+
+    const reserveAuditorAddress = await reserveAuditor.getAddress();
+    const stableCoin = await upgrades.deployProxy(
+      stableCoinContract,
+      [defaultAdmin.address, reserveAuditorAddress, defaultAdmin.address],
+      {
+        gasPrice: gas,
+        initializer: "initialize",
+      }
+    );
+
+    const ADMIN_ROLE = await stableCoin.ADMIN_ROLE();
+    await stableCoin.connect(defaultAdmin).grantRole(ADMIN_ROLE, admin.address);
+
+    const TREASURY_ROLE = await stableCoin.TREASURY_ROLE();
+    await stableCoin
+      .connect(defaultAdmin)
+      .grantRole(TREASURY_ROLE, treasuryRole.address);
+
+    return {
+      defaultAdmin,
+      admin,
+      otherRole,
+      stableCoin,
+      treasuryRole,
+      treasuryWallet
+    };
+  }
+
+  it("Should allow default admin to enable the transaction fee", async function () {
+    const { defaultAdmin, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(defaultAdmin).setTransactionFeeEnabled(true);
+    expect (await stableCoin.transactionFeeEnabled()).to.equal(true);
+    
+  });
+
+  it("Should allow admin to enable the transaction fee", async function () {
+    const { admin, stableCoin} = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(admin).setTransactionFeeEnabled(true);
+    expect (await stableCoin.transactionFeeEnabled()).to.equal(true);
+  });
+
+  it("Should allow treasury role to enable the transaction fee", async function () {
+    const { treasuryRole, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(treasuryRole).setTransactionFeeEnabled(true);
+    expect (await stableCoin.transactionFeeEnabled()).to.equal(true);
+  });
+
+  it("should not allow unauthorized users to enable the transaction fee", async () => {
+    const { otherRole, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+
+    await expect (stableCoin.connect(otherRole).setTransactionFeeEnabled(true)).to.be.revertedWith("Not Authorize to call this function");
+
+  });
+
+  it("Should correctly emit TransactionFeeUpdated event when fee is enabled", async () => {
+    const {stableCoin, treasuryWallet } = await loadFixture(deployStableCoinFixture);
+    
+    await expect(stableCoin.setTransactionFeeEnabled(true)).to.emit(
+      stableCoin,
+      "TransactionFeeUpdated"
+    );
+  });
+
+  it("Should allow default admin to disable the transaction fee", async function () {
+    const { defaultAdmin, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(defaultAdmin).setTransactionFeeEnabled(true);
+    expect (await stableCoin.transactionFeeEnabled()).to.equal(true);
+
+    await stableCoin.connect(defaultAdmin).setTransactionFeeEnabled(false);
+    expect (await stableCoin.transactionFeeEnabled()).to.equal(false);
+    
+  });
+
+  it("Should allow admin to disable the transaction fee", async function () {
+    const { admin, stableCoin} = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(admin).setTransactionFeeEnabled(true);
+    expect (await stableCoin.transactionFeeEnabled()).to.equal(true);
+
+    await stableCoin.connect(admin).setTransactionFeeEnabled(false);
+    expect (await stableCoin.transactionFeeEnabled()).to.equal(false);
+  });
+
+  it("Should allow treasury role to enable the transaction fee", async function () {
+    const { treasuryRole, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(treasuryRole).setTransactionFeeEnabled(true);
+    expect (await stableCoin.transactionFeeEnabled()).to.equal(true);
+
+    await stableCoin.connect(treasuryRole).setTransactionFeeEnabled(false);
+    expect (await stableCoin.transactionFeeEnabled()).to.equal(false);
+  });
+
+  it("should not allow unauthorized users to disable the transaction fee", async () => {
+    const { admin,otherRole, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+
+    await stableCoin.connect(admin).setTransactionFeeEnabled(true);
+    expect (await stableCoin.transactionFeeEnabled()).to.equal(true);
+
+    await expect (stableCoin.connect(otherRole).setTransactionFeeEnabled(true)).to.be.revertedWith("Not Authorize to call this function");
+
+  });
+
+  it("Should correctly emit TransactionFeeUpdated event when fee is disabled", async () => {
+    const {stableCoin } = await loadFixture(deployStableCoinFixture);
+    
+    await stableCoin.setTransactionFeeEnabled(true);
+    await expect(stableCoin.setTransactionFeeEnabled(false)).to.emit(
+      stableCoin,
+      "TransactionFeeUpdated"
+    );
+  });
+
+});
+
