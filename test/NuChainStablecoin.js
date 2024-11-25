@@ -161,7 +161,7 @@ describe("Mint Function", function () {
     expect(await stableCoin.totalSupply()).to.equal(
       ethers.parseEther("1000000500")
     );
-    expect(await stableCoin.totalReserves()).to.equal(
+    expect(await stableCoin.balanceReserves()).to.equal(
       ethers.parseEther("1999999500")
     );
   });
@@ -178,7 +178,7 @@ describe("Mint Function", function () {
     expect(await stableCoin.totalSupply()).to.equal(
       ethers.parseEther("1000000500")
     );
-    expect(await stableCoin.totalReserves()).to.equal(
+    expect(await stableCoin.balanceReserves()).to.equal(
       ethers.parseEther("1999999500")
     );
   });
@@ -196,7 +196,7 @@ describe("Mint Function", function () {
     expect(await stableCoin.totalSupply()).to.equal(
       ethers.parseEther("1000000500")
     );
-    expect(await stableCoin.totalReserves()).to.equal(
+    expect(await stableCoin.balanceReserves()).to.equal(
       ethers.parseEther("1999999500")
     );
   });
@@ -278,7 +278,7 @@ describe("Mint Function", function () {
 
     await stableCoin.updateReserves(ethers.parseEther("1000"));
     await stableCoin.connect(admin).mint(otherRole.address, amountToMint);
-    expect(await stableCoin.totalReserves()).to.equal(ethers.parseEther("500"));
+    expect(await stableCoin.balanceReserves()).to.equal(ethers.parseEther("500"));
   });
 });
 
@@ -349,7 +349,7 @@ describe("Burn Function", function () {
     expect(await stableCoin.totalSupply()).to.equal(
       ethers.parseEther("999999500")
     );
-    expect(await stableCoin.totalReserves()).to.equal(
+    expect(await stableCoin.balanceReserves()).to.equal(
       ethers.parseEther("1000000500")
     );
   });
@@ -364,7 +364,7 @@ describe("Burn Function", function () {
     expect(await stableCoin.totalSupply()).to.equal(
       ethers.parseEther("999999500")
     );
-    expect(await stableCoin.totalReserves()).to.equal(
+    expect(await stableCoin.balanceReserves()).to.equal(
       ethers.parseEther("1000000500")
     );
   });
@@ -380,7 +380,7 @@ describe("Burn Function", function () {
     expect(await stableCoin.totalSupply()).to.equal(
       ethers.parseEther("999999500")
     );
-    expect(await stableCoin.totalReserves()).to.equal(
+    expect(await stableCoin.balanceReserves()).to.equal(
       ethers.parseEther("1000000500")
     );
   });
@@ -423,7 +423,7 @@ describe("Burn Function", function () {
 
     await stableCoin.connect(defaultAdmin).burn(amountToBurn);
 
-    expect(await stableCoin.totalReserves()).to.equal(
+    expect(await stableCoin.balanceReserves()).to.equal(
       ethers.parseEther("1000000500")
     );
   });
@@ -491,7 +491,7 @@ describe("Update Reserves", function () {
     );
     await stableCoin.connect(defaultAdmin).updateReserves(reserveAmount);
 
-    expect(await stableCoin.totalReserves()).to.equal(reserveAmount);
+    expect(await stableCoin.balanceReserves()).to.equal(reserveAmount);
   });
 
   it("Should allow admin to update reserves", async function () {
@@ -500,7 +500,7 @@ describe("Update Reserves", function () {
     );
     await stableCoin.connect(admin).updateReserves(reserveAmount);
 
-    expect(await stableCoin.totalReserves()).to.equal(reserveAmount);
+    expect(await stableCoin.balanceReserves()).to.equal(reserveAmount);
   });
 
   it("should not allow unauthorized users to update reserves", async () => {
@@ -536,11 +536,11 @@ describe("Update Reserves", function () {
       deployStableCoinFixture
     );
     await stableCoin.connect(admin).updateReserves(reserveAmount);
-    expect(await stableCoin.totalReserves()).to.equal(reserveAmount);
+    expect(await stableCoin.balanceReserves()).to.equal(reserveAmount);
 
     const reserveAmount2 = ethers.parseEther("600");
     await stableCoin.connect(admin).updateReserves(reserveAmount2);
-    expect(await stableCoin.totalReserves()).to.equal(reserveAmount2);
+    expect(await stableCoin.balanceReserves()).to.equal(reserveAmount2);
   });
 });
 

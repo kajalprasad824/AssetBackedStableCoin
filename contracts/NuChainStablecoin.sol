@@ -295,7 +295,7 @@ contract NuChainStablecoin is
 
     // Reserve data
     uint256 public reserveRatio; // Reserve ratio (1e18 = 100%)
-    uint256 public totalReserves;
+    uint256 public balanceReserves;
     IReserveAuditor public reserveAuditor;
 
     // Events
@@ -367,7 +367,7 @@ contract NuChainStablecoin is
         );
 
         uint256 requiredReserve = amount.mul(reserveRatio).div(1e18);
-        require(totalReserves >= requiredReserve, "Insufficient reserves");
+        require(balanceReserves >= requiredReserve, "Insufficient reserves");
         require(
             reserveAuditor.verifyReserves(requiredReserve + totalSupply()),
             "Reserve verification failed"
@@ -377,10 +377,10 @@ contract NuChainStablecoin is
 
         emit ReserveVerified(
             requiredReserve,
-            totalReserves,
+            balanceReserves,
             reserveAuditor.verifyReserves(requiredReserve)
         );
-        totalReserves = totalReserves.sub(requiredReserve);
+        balanceReserves = balanceReserves.sub(requiredReserve);
 
         emit Minted(to, amount);
     }
@@ -396,7 +396,7 @@ contract NuChainStablecoin is
         uint256 releaseAmount = amount.mul(reserveRatio).div(1e18);
 
         super.burn(amount);
-        totalReserves = totalReserves.add(releaseAmount);
+        balanceReserves = balanceReserves.add(releaseAmount);
 
         emit Burned(msg.sender, amount);
     }
@@ -410,7 +410,7 @@ contract NuChainStablecoin is
         );
 
         require(newReserves != 0, "New Reserve value can't be equal to zero");
-        totalReserves = newReserves;
+        balanceReserves = newReserves;
         emit ReserveUpdated(newReserves);
     }
 
