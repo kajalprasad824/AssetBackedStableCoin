@@ -291,7 +291,7 @@ contract NuChainStablecoin is
     // Fee mechanism
     uint256 public transactionFeePercentage; // Fee percentage in basis points (e.g., 100 = 1%)
     address public treasuryWallet;
-    bool transactionFeeEnabled;
+    bool public transactionFeeEnabled;
 
     // Reserve data
     uint256 public reserveRatio; // Reserve ratio (1e18 = 100%)
