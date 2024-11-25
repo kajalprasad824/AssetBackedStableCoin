@@ -1380,7 +1380,7 @@ describe("Set Transaction Fee Enabled Function", function () {
     expect (await stableCoin.transactionFeeEnabled()).to.equal(false);
   });
 
-  it("Should allow treasury role to enable the transaction fee", async function () {
+  it("Should allow treasury role to disable the transaction fee", async function () {
     const { treasuryRole, stableCoin } = await loadFixture(
       deployStableCoinFixture
     );
@@ -1414,4 +1414,221 @@ describe("Set Transaction Fee Enabled Function", function () {
   });
 
 });
+
+describe("pause Function", function () {
+  async function deployStableCoinFixture() {
+    const gas = (await ethers.provider.getFeeData()).gasPrice;
+    const [defaultAdmin, admin, pauserRole, otherRole] =
+      await ethers.getSigners();
+
+    const reserveAuditorContract = await ethers.getContractFactory(
+      "ReserveAuditor"
+    );
+    const reserveAuditor = await upgrades.deployProxy(
+      reserveAuditorContract,
+      [defaultAdmin.address],
+      {
+        gasPrice: gas,
+        initializer: "initialize",
+      }
+    );
+
+    const stableCoinContract = await ethers.getContractFactory(
+      "NuChainStablecoin"
+    );
+
+    const reserveAuditorAddress = await reserveAuditor.getAddress();
+    const stableCoin = await upgrades.deployProxy(
+      stableCoinContract,
+      [defaultAdmin.address, reserveAuditorAddress, defaultAdmin.address],
+      {
+        gasPrice: gas,
+        initializer: "initialize",
+      }
+    );
+
+    const ADMIN_ROLE = await stableCoin.ADMIN_ROLE();
+    await stableCoin.connect(defaultAdmin).grantRole(ADMIN_ROLE, admin.address);
+
+    const PAUSER_ROLE = await stableCoin.PAUSER_ROLE();
+    await stableCoin
+      .connect(defaultAdmin)
+      .grantRole(PAUSER_ROLE, pauserRole.address);
+
+    return {
+      defaultAdmin,
+      admin,
+      otherRole,
+      stableCoin,
+      pauserRole
+    };
+  }
+
+  it("Should allow default admin to pause the contract", async function () {
+    const { defaultAdmin, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(defaultAdmin).pause();
+    expect (await stableCoin.paused()).to.equal(true);
+    
+  });
+
+  it("Should allow admin to pause the contract", async function () {
+    const { admin, stableCoin} = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(admin).pause();
+    expect (await stableCoin.paused()).to.equal(true);
+  });
+
+  it("Should allow pauser role to pause the contract", async function () {
+    const { pauserRole, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(pauserRole).pause();
+    expect (await stableCoin.paused()).to.equal(true);
+  });
+
+  it("should not allow unauthorized users to pause the contract", async () => {
+    const { otherRole, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+
+    await expect (stableCoin.connect(otherRole).pause()).to.be.revertedWith("Not Authorize to call this function");
+
+  });
+
+  it("Should not allow the contract to be paused again once already paused", async function () {
+    const {stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.pause();
+    expect(stableCoin.pause()).to.be.revertedWithCustomError;
+});
+
+  it("Should correctly emit Paused event when paused", async () => {
+    const {stableCoin } = await loadFixture(deployStableCoinFixture);
+    
+    await expect(stableCoin.pause()).to.emit(
+      stableCoin,
+      "Paused"
+    );
+  });
+
+});
+
+describe("unpause Function", function () {
+  async function deployStableCoinFixture() {
+    const gas = (await ethers.provider.getFeeData()).gasPrice;
+    const [defaultAdmin, admin, pauserRole, otherRole] =
+      await ethers.getSigners();
+
+    const reserveAuditorContract = await ethers.getContractFactory(
+      "ReserveAuditor"
+    );
+    const reserveAuditor = await upgrades.deployProxy(
+      reserveAuditorContract,
+      [defaultAdmin.address],
+      {
+        gasPrice: gas,
+        initializer: "initialize",
+      }
+    );
+
+    const stableCoinContract = await ethers.getContractFactory(
+      "NuChainStablecoin"
+    );
+
+    const reserveAuditorAddress = await reserveAuditor.getAddress();
+    const stableCoin = await upgrades.deployProxy(
+      stableCoinContract,
+      [defaultAdmin.address, reserveAuditorAddress, defaultAdmin.address],
+      {
+        gasPrice: gas,
+        initializer: "initialize",
+      }
+    );
+
+    const ADMIN_ROLE = await stableCoin.ADMIN_ROLE();
+    await stableCoin.connect(defaultAdmin).grantRole(ADMIN_ROLE, admin.address);
+
+    const PAUSER_ROLE = await stableCoin.PAUSER_ROLE();
+    await stableCoin
+      .connect(defaultAdmin)
+      .grantRole(PAUSER_ROLE, pauserRole.address);
+
+    return {
+      defaultAdmin,
+      admin,
+      otherRole,
+      stableCoin,
+      pauserRole
+    };
+  }
+
+  it("Should allow default admin to unpause the contract", async function () {
+    const { defaultAdmin, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(defaultAdmin).pause();
+    expect (await stableCoin.paused()).to.equal(true);
+
+    await stableCoin.connect(defaultAdmin).unpause();
+    expect (await stableCoin.paused()).to.equal(false);
+    
+  });
+
+  it("Should allow admin to unpause the contract", async function () {
+    const { admin, stableCoin} = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(admin).pause();
+    expect (await stableCoin.paused()).to.equal(true);
+
+    await stableCoin.connect(admin).unpause();
+    expect (await stableCoin.paused()).to.equal(false);
+  });
+
+  it("Should allow pauser role to unpause the contract", async function () {
+    const { pauserRole, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(pauserRole).pause();
+    expect (await stableCoin.paused()).to.equal(true);
+
+    await stableCoin.connect(pauserRole).unpause();
+    expect (await stableCoin.paused()).to.equal(false);
+  });
+
+  it("should not allow unauthorized users to unpause the contract", async () => {
+    const {pauserRole, otherRole, stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+    await stableCoin.connect(pauserRole).pause();
+    expect (await stableCoin.paused()).to.equal(true);
+
+    await expect (stableCoin.connect(otherRole).unpause()).to.be.revertedWith("Not Authorize to call this function");
+
+  });
+
+  it("Should not allow the contract to be unpaused if it is not already paused", async function () {
+    const {stableCoin } = await loadFixture(
+      deployStableCoinFixture
+    );
+    
+    expect(stableCoin.unpause()).to.be.revertedWithCustomError;
+});
+
+  it("Should correctly emit Unpaused event when unpaused", async () => {
+    const {stableCoin } = await loadFixture(deployStableCoinFixture);
+    await stableCoin.pause();
+    expect (await stableCoin.paused()).to.equal(true);
+    await expect(stableCoin.unpause()).to.emit(
+      stableCoin,
+      "Unpaused"
+    );
+  });
+
+});
+
 
