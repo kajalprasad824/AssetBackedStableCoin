@@ -526,6 +526,23 @@ contract NuChainStablecoin is
 
     // ERC20 overrides to enforce pause, fee deduction, and freeze checks
 
+    function transfer(
+        address to,
+        uint256 value
+    ) public virtual override whenNotPaused returns (bool) {
+        super.transfer(to, value);
+        return true;
+    }
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 value
+    ) public virtual override whenNotPaused returns (bool) {
+        super.transferFrom(from, to, value);
+        return true;
+    }
+
     function _transfer(
         address sender,
         address recipient,

@@ -1790,6 +1790,27 @@ describe("_transfer Function", function () {
     ).to.be.revertedWith("Recipient account is frozen");
   });
 
+  it("Should revert while calling transfer if paused", async function () {
+    const { stableCoin, defaultAdmin, transferAmount, recipient } = await loadFixture(
+      deployStableCoinFixture
+    );
+
+    await stableCoin.paused();
+    expect(stableCoin.connect(defaultAdmin).transfer(recipient.address, transferAmount)).to
+      .be.revertedWithCustomError;
+  });
+
+  it("Should revert while calling transferFrom if paused", async function () {
+    const { stableCoin, defaultAdmin,admin, transferAmount, recipient } = await loadFixture(
+      deployStableCoinFixture
+    );
+
+    await stableCoin.connect(defaultAdmin).approve(admin,transferAmount);
+    await stableCoin.paused();
+    expect(stableCoin.connect(admin).transferFrom(defaultAdmin.address,recipient.address, transferAmount)).to
+      .be.revertedWithCustomError;
+  });
+
   it("Should emit Transfer event", async function () {
     const {
       sender,
