@@ -865,7 +865,9 @@ describe("Unfreeze Function", function () {
   });
 
   it("Should correctly emit AddressUnfrozen event", async () => {
-    const {admin, stableCoin, addr1 } = await loadFixture(deployStableCoinFixture);
+    const { admin, stableCoin, addr1 } = await loadFixture(
+      deployStableCoinFixture
+    );
 
     await stableCoin.connect(admin).freeze(addr1.address);
     await expect(stableCoin.unfreeze(addr1.address)).to.emit(
@@ -878,7 +880,7 @@ describe("Unfreeze Function", function () {
     const { admin, stableCoin, addr1 } = await loadFixture(
       deployStableCoinFixture
     );
-    
+
     await expect(
       stableCoin.connect(admin).unfreeze(addr1.address)
     ).to.be.revertedWith("Account is not frozen");
@@ -943,8 +945,10 @@ describe("Wipe Frozen Address Function", function () {
       .connect(defaultAdmin)
       .grantRole(ASSET_PROTECTION_ROLE, assetProtectionRole.address);
 
-      await stableCoin.connect(defaultAdmin).transfer(addr1.address,1000000000000);
-      await stableCoin.connect(defaultAdmin).freeze(addr1.address);
+    await stableCoin
+      .connect(defaultAdmin)
+      .transfer(addr1.address, 1000000000000);
+    await stableCoin.connect(defaultAdmin).freeze(addr1.address);
 
     return {
       defaultAdmin,
@@ -963,12 +967,11 @@ describe("Wipe Frozen Address Function", function () {
     );
     const balance = await stableCoin.balanceOf(addr1.address);
     const totalSupply = await stableCoin.totalSupply();
-    const remainTotalSupply =  totalSupply - balance;
+    const remainTotalSupply = totalSupply - balance;
     await stableCoin.connect(defaultAdmin).wipeFrozenAddress(addr1.address);
 
     expect(await stableCoin.balanceOf(addr1.address)).to.equal(0);
     expect(await stableCoin.totalSupply()).to.equal(remainTotalSupply);
-    
   });
 
   it("Should allow admin to wipe a frozen account", async function () {
@@ -977,7 +980,7 @@ describe("Wipe Frozen Address Function", function () {
     );
     const balance = await stableCoin.balanceOf(addr1.address);
     const totalSupply = await stableCoin.totalSupply();
-    const remainTotalSupply =  totalSupply - balance;
+    const remainTotalSupply = totalSupply - balance;
     await stableCoin.connect(admin).wipeFrozenAddress(addr1.address);
 
     expect(await stableCoin.balanceOf(addr1.address)).to.equal(0);
@@ -990,8 +993,10 @@ describe("Wipe Frozen Address Function", function () {
     );
     const balance = await stableCoin.balanceOf(addr1.address);
     const totalSupply = await stableCoin.totalSupply();
-    const remainTotalSupply =  totalSupply - balance;
-    await stableCoin.connect(assetProtectionRole).wipeFrozenAddress(addr1.address);
+    const remainTotalSupply = totalSupply - balance;
+    await stableCoin
+      .connect(assetProtectionRole)
+      .wipeFrozenAddress(addr1.address);
 
     expect(await stableCoin.balanceOf(addr1.address)).to.equal(0);
     expect(await stableCoin.totalSupply()).to.equal(remainTotalSupply);
@@ -1002,13 +1007,14 @@ describe("Wipe Frozen Address Function", function () {
       deployStableCoinFixture
     );
 
-    await expect (stableCoin.connect(otherRole).wipeFrozenAddress(addr1.address)).to.be.revertedWith("Not Authorize to call this function");
-
+    await expect(
+      stableCoin.connect(otherRole).wipeFrozenAddress(addr1.address)
+    ).to.be.revertedWith("Not Authorize to call this function");
   });
 
   it("Should correctly emit FrozenAddressWiped  event", async () => {
-    const {stableCoin, addr1 } = await loadFixture(deployStableCoinFixture);
-    
+    const { stableCoin, addr1 } = await loadFixture(deployStableCoinFixture);
+
     await expect(stableCoin.wipeFrozenAddress(addr1.address)).to.emit(
       stableCoin,
       "FrozenAddressWiped"
@@ -1019,7 +1025,7 @@ describe("Wipe Frozen Address Function", function () {
     const { admin, stableCoin, addr2 } = await loadFixture(
       deployStableCoinFixture
     );
-    
+
     await expect(
       stableCoin.connect(admin).wipeFrozenAddress(addr2.address)
     ).to.be.revertedWith("Account is not frozen");
@@ -1031,12 +1037,13 @@ describe("Wipe Frozen Address Function", function () {
     );
     const balance = await stableCoin.balanceOf(addr1.address);
     const totalSupply = await stableCoin.totalSupply();
-    const remainTotalSupply =  totalSupply - balance;
-    await stableCoin.connect(assetProtectionRole).wipeFrozenAddress(addr1.address);
+    const remainTotalSupply = totalSupply - balance;
+    await stableCoin
+      .connect(assetProtectionRole)
+      .wipeFrozenAddress(addr1.address);
 
     expect(await stableCoin.totalSupply()).to.equal(remainTotalSupply);
   });
-
 });
 
 describe("Set Transaction Fee Function", function () {
@@ -1093,16 +1100,13 @@ describe("Set Transaction Fee Function", function () {
       deployStableCoinFixture
     );
     await stableCoin.connect(defaultAdmin).setTransactionFee(500);
-    expect (await stableCoin.transactionFeePercentage()).to.equal(500);
-    
+    expect(await stableCoin.transactionFeePercentage()).to.equal(500);
   });
 
   it("Should allow admin to set transaction fee", async function () {
-    const { admin, stableCoin } = await loadFixture(
-      deployStableCoinFixture
-    );
+    const { admin, stableCoin } = await loadFixture(deployStableCoinFixture);
     await stableCoin.connect(admin).setTransactionFee(500);
-    expect (await stableCoin.transactionFeePercentage()).to.equal(500);
+    expect(await stableCoin.transactionFeePercentage()).to.equal(500);
   });
 
   it("Should allow treasury role to set transaction fee", async function () {
@@ -1110,7 +1114,7 @@ describe("Set Transaction Fee Function", function () {
       deployStableCoinFixture
     );
     await stableCoin.connect(treasuryRole).setTransactionFee(500);
-    expect (await stableCoin.transactionFeePercentage()).to.equal(500);
+    expect(await stableCoin.transactionFeePercentage()).to.equal(500);
   });
 
   it("should not allow unauthorized users to set transaction fee", async () => {
@@ -1118,13 +1122,14 @@ describe("Set Transaction Fee Function", function () {
       deployStableCoinFixture
     );
 
-    await expect (stableCoin.connect(otherRole).setTransactionFee(500)).to.be.revertedWith("Not Authorize to call this function");
-
+    await expect(
+      stableCoin.connect(otherRole).setTransactionFee(500)
+    ).to.be.revertedWith("Not Authorize to call this function");
   });
 
   it("Should correctly emit FeePercentageUpdated  event", async () => {
-    const {stableCoin } = await loadFixture(deployStableCoinFixture);
-    
+    const { stableCoin } = await loadFixture(deployStableCoinFixture);
+
     await expect(stableCoin.setTransactionFee(500)).to.emit(
       stableCoin,
       "FeePercentageUpdated"
@@ -1132,23 +1137,21 @@ describe("Set Transaction Fee Function", function () {
   });
 
   it("should revert if fee percentage is greater than 10%", async () => {
-    const {stableCoin } = await loadFixture(
-      deployStableCoinFixture
+    const { stableCoin } = await loadFixture(deployStableCoinFixture);
+
+    await expect(stableCoin.setTransactionFee(10000)).to.be.revertedWith(
+      "Fee cannot exceed 10%"
     );
-
-    await expect (stableCoin.setTransactionFee(10000)).to.be.revertedWith("Fee cannot exceed 10%");
-
   });
 
   it("Should correctly update transaction fee percentage", async function () {
     const { treasuryRole, stableCoin } = await loadFixture(
       deployStableCoinFixture
     );
-    
-    await stableCoin.connect(treasuryRole).setTransactionFee(500);
-    expect (await stableCoin.transactionFeePercentage()).to.equal(500);
-  });
 
+    await stableCoin.connect(treasuryRole).setTransactionFee(500);
+    expect(await stableCoin.transactionFeePercentage()).to.equal(500);
+  });
 });
 
 describe("Set Treasury Wallet Function", function () {
@@ -1197,7 +1200,7 @@ describe("Set Treasury Wallet Function", function () {
       otherRole,
       stableCoin,
       treasuryRole,
-      treasuryWallet
+      treasuryWallet,
     };
   }
 
@@ -1205,25 +1208,28 @@ describe("Set Treasury Wallet Function", function () {
     const { defaultAdmin, stableCoin, treasuryWallet } = await loadFixture(
       deployStableCoinFixture
     );
-    await stableCoin.connect(defaultAdmin).setTreasuryWallet(treasuryWallet.address);
-    expect (await stableCoin.treasuryWallet()).to.equal(treasuryWallet.address);
-    
+    await stableCoin
+      .connect(defaultAdmin)
+      .setTreasuryWallet(treasuryWallet.address);
+    expect(await stableCoin.treasuryWallet()).to.equal(treasuryWallet.address);
   });
 
   it("Should allow admin to set treasury wallet address", async function () {
-    const { admin, stableCoin, treasuryWallet} = await loadFixture(
+    const { admin, stableCoin, treasuryWallet } = await loadFixture(
       deployStableCoinFixture
     );
     await stableCoin.connect(admin).setTreasuryWallet(treasuryWallet.address);
-    expect (await stableCoin.treasuryWallet()).to.equal(treasuryWallet.address);
+    expect(await stableCoin.treasuryWallet()).to.equal(treasuryWallet.address);
   });
 
   it("Should allow treasury role to set treasury wallet address", async function () {
     const { treasuryRole, stableCoin, treasuryWallet } = await loadFixture(
       deployStableCoinFixture
     );
-    await stableCoin.connect(treasuryRole).setTreasuryWallet(treasuryWallet.address);
-    expect (await stableCoin.treasuryWallet()).to.equal(treasuryWallet.address);
+    await stableCoin
+      .connect(treasuryRole)
+      .setTreasuryWallet(treasuryWallet.address);
+    expect(await stableCoin.treasuryWallet()).to.equal(treasuryWallet.address);
   });
 
   it("should not allow unauthorized users to set treasury wallet address", async () => {
@@ -1231,13 +1237,16 @@ describe("Set Treasury Wallet Function", function () {
       deployStableCoinFixture
     );
 
-    await expect (stableCoin.connect(otherRole).setTreasuryWallet(treasuryWallet.address)).to.be.revertedWith("Not Authorize to call this function");
-
+    await expect(
+      stableCoin.connect(otherRole).setTreasuryWallet(treasuryWallet.address)
+    ).to.be.revertedWith("Not Authorize to call this function");
   });
 
   it("Should correctly emit TreasuryWalletUpdated  event", async () => {
-    const {stableCoin, treasuryWallet } = await loadFixture(deployStableCoinFixture);
-    
+    const { stableCoin, treasuryWallet } = await loadFixture(
+      deployStableCoinFixture
+    );
+
     await expect(stableCoin.setTreasuryWallet(treasuryWallet.address)).to.emit(
       stableCoin,
       "TreasuryWalletUpdated"
@@ -1245,23 +1254,21 @@ describe("Set Treasury Wallet Function", function () {
   });
 
   it("should revert updating treasury wallet to the zero address", async () => {
-    const {stableCoin } = await loadFixture(
-      deployStableCoinFixture
-    );
+    const { stableCoin } = await loadFixture(deployStableCoinFixture);
 
-    await expect (stableCoin.setTreasuryWallet(ethers.ZeroAddress)).to.be.revertedWith("Invalid treasury wallet");
-
+    await expect(
+      stableCoin.setTreasuryWallet(ethers.ZeroAddress)
+    ).to.be.revertedWith("Invalid treasury wallet");
   });
 
   it("Should correctly update treasury Wallet address", async function () {
     const { treasuryWallet, stableCoin } = await loadFixture(
       deployStableCoinFixture
     );
-    
-    await stableCoin.setTreasuryWallet(treasuryWallet);
-    expect (await stableCoin.treasuryWallet()).to.equal(treasuryWallet.address);
-  });
 
+    await stableCoin.setTreasuryWallet(treasuryWallet);
+    expect(await stableCoin.treasuryWallet()).to.equal(treasuryWallet.address);
+  });
 });
 
 describe("Set Transaction Fee Enabled Function", function () {
@@ -1310,7 +1317,7 @@ describe("Set Transaction Fee Enabled Function", function () {
       otherRole,
       stableCoin,
       treasuryRole,
-      treasuryWallet
+      treasuryWallet,
     };
   }
 
@@ -1319,16 +1326,13 @@ describe("Set Transaction Fee Enabled Function", function () {
       deployStableCoinFixture
     );
     await stableCoin.connect(defaultAdmin).setTransactionFeeEnabled(true);
-    expect (await stableCoin.transactionFeeEnabled()).to.equal(true);
-    
+    expect(await stableCoin.transactionFeeEnabled()).to.equal(true);
   });
 
   it("Should allow admin to enable the transaction fee", async function () {
-    const { admin, stableCoin} = await loadFixture(
-      deployStableCoinFixture
-    );
+    const { admin, stableCoin } = await loadFixture(deployStableCoinFixture);
     await stableCoin.connect(admin).setTransactionFeeEnabled(true);
-    expect (await stableCoin.transactionFeeEnabled()).to.equal(true);
+    expect(await stableCoin.transactionFeeEnabled()).to.equal(true);
   });
 
   it("Should allow treasury role to enable the transaction fee", async function () {
@@ -1336,7 +1340,7 @@ describe("Set Transaction Fee Enabled Function", function () {
       deployStableCoinFixture
     );
     await stableCoin.connect(treasuryRole).setTransactionFeeEnabled(true);
-    expect (await stableCoin.transactionFeeEnabled()).to.equal(true);
+    expect(await stableCoin.transactionFeeEnabled()).to.equal(true);
   });
 
   it("should not allow unauthorized users to enable the transaction fee", async () => {
@@ -1344,13 +1348,16 @@ describe("Set Transaction Fee Enabled Function", function () {
       deployStableCoinFixture
     );
 
-    await expect (stableCoin.connect(otherRole).setTransactionFeeEnabled(true)).to.be.revertedWith("Not Authorize to call this function");
-
+    await expect(
+      stableCoin.connect(otherRole).setTransactionFeeEnabled(true)
+    ).to.be.revertedWith("Not Authorize to call this function");
   });
 
   it("Should correctly emit TransactionFeeUpdated event when fee is enabled", async () => {
-    const {stableCoin, treasuryWallet } = await loadFixture(deployStableCoinFixture);
-    
+    const { stableCoin, treasuryWallet } = await loadFixture(
+      deployStableCoinFixture
+    );
+
     await expect(stableCoin.setTransactionFeeEnabled(true)).to.emit(
       stableCoin,
       "TransactionFeeUpdated"
@@ -1362,22 +1369,19 @@ describe("Set Transaction Fee Enabled Function", function () {
       deployStableCoinFixture
     );
     await stableCoin.connect(defaultAdmin).setTransactionFeeEnabled(true);
-    expect (await stableCoin.transactionFeeEnabled()).to.equal(true);
+    expect(await stableCoin.transactionFeeEnabled()).to.equal(true);
 
     await stableCoin.connect(defaultAdmin).setTransactionFeeEnabled(false);
-    expect (await stableCoin.transactionFeeEnabled()).to.equal(false);
-    
+    expect(await stableCoin.transactionFeeEnabled()).to.equal(false);
   });
 
   it("Should allow admin to disable the transaction fee", async function () {
-    const { admin, stableCoin} = await loadFixture(
-      deployStableCoinFixture
-    );
+    const { admin, stableCoin } = await loadFixture(deployStableCoinFixture);
     await stableCoin.connect(admin).setTransactionFeeEnabled(true);
-    expect (await stableCoin.transactionFeeEnabled()).to.equal(true);
+    expect(await stableCoin.transactionFeeEnabled()).to.equal(true);
 
     await stableCoin.connect(admin).setTransactionFeeEnabled(false);
-    expect (await stableCoin.transactionFeeEnabled()).to.equal(false);
+    expect(await stableCoin.transactionFeeEnabled()).to.equal(false);
   });
 
   it("Should allow treasury role to disable the transaction fee", async function () {
@@ -1385,34 +1389,34 @@ describe("Set Transaction Fee Enabled Function", function () {
       deployStableCoinFixture
     );
     await stableCoin.connect(treasuryRole).setTransactionFeeEnabled(true);
-    expect (await stableCoin.transactionFeeEnabled()).to.equal(true);
+    expect(await stableCoin.transactionFeeEnabled()).to.equal(true);
 
     await stableCoin.connect(treasuryRole).setTransactionFeeEnabled(false);
-    expect (await stableCoin.transactionFeeEnabled()).to.equal(false);
+    expect(await stableCoin.transactionFeeEnabled()).to.equal(false);
   });
 
   it("should not allow unauthorized users to disable the transaction fee", async () => {
-    const { admin,otherRole, stableCoin } = await loadFixture(
+    const { admin, otherRole, stableCoin } = await loadFixture(
       deployStableCoinFixture
     );
 
     await stableCoin.connect(admin).setTransactionFeeEnabled(true);
-    expect (await stableCoin.transactionFeeEnabled()).to.equal(true);
+    expect(await stableCoin.transactionFeeEnabled()).to.equal(true);
 
-    await expect (stableCoin.connect(otherRole).setTransactionFeeEnabled(true)).to.be.revertedWith("Not Authorize to call this function");
-
+    await expect(
+      stableCoin.connect(otherRole).setTransactionFeeEnabled(true)
+    ).to.be.revertedWith("Not Authorize to call this function");
   });
 
   it("Should correctly emit TransactionFeeUpdated event when fee is disabled", async () => {
-    const {stableCoin } = await loadFixture(deployStableCoinFixture);
-    
+    const { stableCoin } = await loadFixture(deployStableCoinFixture);
+
     await stableCoin.setTransactionFeeEnabled(true);
     await expect(stableCoin.setTransactionFeeEnabled(false)).to.emit(
       stableCoin,
       "TransactionFeeUpdated"
     );
   });
-
 });
 
 describe("pause Function", function () {
@@ -1460,7 +1464,7 @@ describe("pause Function", function () {
       admin,
       otherRole,
       stableCoin,
-      pauserRole
+      pauserRole,
     };
   }
 
@@ -1469,16 +1473,13 @@ describe("pause Function", function () {
       deployStableCoinFixture
     );
     await stableCoin.connect(defaultAdmin).pause();
-    expect (await stableCoin.paused()).to.equal(true);
-    
+    expect(await stableCoin.paused()).to.equal(true);
   });
 
   it("Should allow admin to pause the contract", async function () {
-    const { admin, stableCoin} = await loadFixture(
-      deployStableCoinFixture
-    );
+    const { admin, stableCoin } = await loadFixture(deployStableCoinFixture);
     await stableCoin.connect(admin).pause();
-    expect (await stableCoin.paused()).to.equal(true);
+    expect(await stableCoin.paused()).to.equal(true);
   });
 
   it("Should allow pauser role to pause the contract", async function () {
@@ -1486,7 +1487,7 @@ describe("pause Function", function () {
       deployStableCoinFixture
     );
     await stableCoin.connect(pauserRole).pause();
-    expect (await stableCoin.paused()).to.equal(true);
+    expect(await stableCoin.paused()).to.equal(true);
   });
 
   it("should not allow unauthorized users to pause the contract", async () => {
@@ -1494,27 +1495,25 @@ describe("pause Function", function () {
       deployStableCoinFixture
     );
 
-    await expect (stableCoin.connect(otherRole).pause()).to.be.revertedWith("Not Authorize to call this function");
-
+    await expect(stableCoin.connect(otherRole).pause()).to.be.revertedWith(
+      "Not Authorize to call this function"
+    );
   });
 
   it("Should not allow the contract to be paused again once already paused", async function () {
-    const {stableCoin } = await loadFixture(
-      deployStableCoinFixture
-    );
+    const { stableCoin } = await loadFixture(deployStableCoinFixture);
     await stableCoin.pause();
     expect(stableCoin.pause()).to.be.revertedWithCustomError;
-});
+  });
 
   it("Should correctly emit Paused event when paused", async () => {
-    const {stableCoin } = await loadFixture(deployStableCoinFixture);
-    
-    await expect(stableCoin.pause()).to.emit(
+    const { admin, stableCoin } = await loadFixture(deployStableCoinFixture);
+
+    await expect(stableCoin.connect(admin).pause()).to.emit(
       stableCoin,
       "Paused"
     );
   });
-
 });
 
 describe("unpause Function", function () {
@@ -1562,7 +1561,7 @@ describe("unpause Function", function () {
       admin,
       otherRole,
       stableCoin,
-      pauserRole
+      pauserRole,
     };
   }
 
@@ -1571,22 +1570,19 @@ describe("unpause Function", function () {
       deployStableCoinFixture
     );
     await stableCoin.connect(defaultAdmin).pause();
-    expect (await stableCoin.paused()).to.equal(true);
+    expect(await stableCoin.paused()).to.equal(true);
 
     await stableCoin.connect(defaultAdmin).unpause();
-    expect (await stableCoin.paused()).to.equal(false);
-    
+    expect(await stableCoin.paused()).to.equal(false);
   });
 
   it("Should allow admin to unpause the contract", async function () {
-    const { admin, stableCoin} = await loadFixture(
-      deployStableCoinFixture
-    );
+    const { admin, stableCoin } = await loadFixture(deployStableCoinFixture);
     await stableCoin.connect(admin).pause();
-    expect (await stableCoin.paused()).to.equal(true);
+    expect(await stableCoin.paused()).to.equal(true);
 
     await stableCoin.connect(admin).unpause();
-    expect (await stableCoin.paused()).to.equal(false);
+    expect(await stableCoin.paused()).to.equal(false);
   });
 
   it("Should allow pauser role to unpause the contract", async function () {
@@ -1594,41 +1590,220 @@ describe("unpause Function", function () {
       deployStableCoinFixture
     );
     await stableCoin.connect(pauserRole).pause();
-    expect (await stableCoin.paused()).to.equal(true);
+    expect(await stableCoin.paused()).to.equal(true);
 
     await stableCoin.connect(pauserRole).unpause();
-    expect (await stableCoin.paused()).to.equal(false);
+    expect(await stableCoin.paused()).to.equal(false);
   });
 
   it("should not allow unauthorized users to unpause the contract", async () => {
-    const {pauserRole, otherRole, stableCoin } = await loadFixture(
+    const { pauserRole, otherRole, stableCoin } = await loadFixture(
       deployStableCoinFixture
     );
     await stableCoin.connect(pauserRole).pause();
-    expect (await stableCoin.paused()).to.equal(true);
+    expect(await stableCoin.paused()).to.equal(true);
 
-    await expect (stableCoin.connect(otherRole).unpause()).to.be.revertedWith("Not Authorize to call this function");
-
+    await expect(stableCoin.connect(otherRole).unpause()).to.be.revertedWith(
+      "Not Authorize to call this function"
+    );
   });
 
   it("Should not allow the contract to be unpaused if it is not already paused", async function () {
-    const {stableCoin } = await loadFixture(
-      deployStableCoinFixture
-    );
-    
+    const { stableCoin } = await loadFixture(deployStableCoinFixture);
+
     expect(stableCoin.unpause()).to.be.revertedWithCustomError;
-});
+  });
 
   it("Should correctly emit Unpaused event when unpaused", async () => {
-    const {stableCoin } = await loadFixture(deployStableCoinFixture);
+    const { stableCoin } = await loadFixture(deployStableCoinFixture);
     await stableCoin.pause();
-    expect (await stableCoin.paused()).to.equal(true);
-    await expect(stableCoin.unpause()).to.emit(
+    expect(await stableCoin.paused()).to.equal(true);
+    await expect(stableCoin.unpause()).to.emit(stableCoin, "Unpaused");
+  });
+});
+
+describe("_transfer Function", function () {
+  async function deployStableCoinFixture() {
+    const gas = (await ethers.provider.getFeeData()).gasPrice;
+    const [
+      defaultAdmin,
+      admin,
+      whitelistRole,
+      otherRole,
+      sender,
+      recipient,
+      treasuryWallet,
+    ] = await ethers.getSigners();
+
+    const reserveAuditorContract = await ethers.getContractFactory(
+      "ReserveAuditor"
+    );
+    const reserveAuditor = await upgrades.deployProxy(
+      reserveAuditorContract,
+      [defaultAdmin.address],
+      {
+        gasPrice: gas,
+        initializer: "initialize",
+      }
+    );
+
+    const stableCoinContract = await ethers.getContractFactory(
+      "NuChainStablecoin"
+    );
+
+    const reserveAuditorAddress = await reserveAuditor.getAddress();
+    const stableCoin = await upgrades.deployProxy(
+      stableCoinContract,
+      [defaultAdmin.address, reserveAuditorAddress, treasuryWallet.address],
+      {
+        gasPrice: gas,
+        initializer: "initialize",
+      }
+    );
+
+    const ADMIN_ROLE = await stableCoin.ADMIN_ROLE();
+    await stableCoin.connect(defaultAdmin).grantRole(ADMIN_ROLE, admin.address);
+
+    const WHITELIST_ROLE = await stableCoin.WHITELIST_ROLE();
+    await stableCoin
+      .connect(defaultAdmin)
+      .grantRole(WHITELIST_ROLE, whitelistRole.address);
+
+    const transactionFeePercentage = 1000;
+
+    await stableCoin.setTransactionFee(transactionFeePercentage);
+
+    const transferAmount = ethers.parseEther("100");
+    await stableCoin
+      .connect(defaultAdmin)
+      .transfer(sender.address, transferAmount);
+
+    return {
+      defaultAdmin,
+      admin,
+      otherRole,
       stableCoin,
-      "Unpaused"
+      whitelistRole,
+      sender,
+      recipient,
+      transferAmount,
+      transactionFeePercentage,
+      treasuryWallet,
+    };
+  }
+
+  it("Should transfer the full amount when transaction fees are disabled", async function () {
+    const { defaultAdmin, stableCoin, recipient, transferAmount } =
+      await loadFixture(deployStableCoinFixture);
+
+    await stableCoin
+      .connect(defaultAdmin)
+      .transfer(recipient.address, transferAmount);
+    expect(await stableCoin.balanceOf(recipient.address)).to.equal(
+      transferAmount
     );
   });
 
+  it("Should deduct a fee when transaction fees are enabled", async function () {
+    const {
+      sender,
+      stableCoin,
+      recipient,
+      transferAmount,
+      defaultAdmin,
+      transactionFeePercentage,
+    } = await loadFixture(deployStableCoinFixture);
+
+    await stableCoin.connect(defaultAdmin).setTransactionFeeEnabled(true);
+
+    const expectedFeeBeforeDivision =
+      transferAmount * BigInt(transactionFeePercentage);
+    const expectedFee = expectedFeeBeforeDivision / BigInt(10000);
+    const expectedAmountAfterFee = transferAmount - expectedFee;
+
+    await stableCoin
+      .connect(sender)
+      .transfer(recipient.address, transferAmount);
+    expect(await stableCoin.balanceOf(recipient.address)).to.equal(
+      expectedAmountAfterFee
+    );
+  });
+
+  it("Should transfer the full amount for whitelisted accounts even if transaction fee are enabled", async function () {
+    const {
+      whitelistRole,
+      stableCoin,
+      recipient,
+      transferAmount,
+      defaultAdmin
+    } = await loadFixture(deployStableCoinFixture);
+
+    await stableCoin.connect(defaultAdmin).setTransactionFeeEnabled(true);
+    await stableCoin
+      .connect(defaultAdmin)
+      .transfer(whitelistRole, ethers.parseEther("200"));
+
+    await stableCoin
+      .connect(whitelistRole)
+      .transfer(recipient.address, transferAmount);
+    expect(await stableCoin.balanceOf(recipient.address)).to.equal(
+      transferAmount
+    );
+  });
+
+  it("Should revert when the sender's account is frozen", async function () {
+    const {
+      sender,
+      stableCoin,
+      recipient,
+      transferAmount,
+      defaultAdmin
+    } = await loadFixture(deployStableCoinFixture);
+
+    await stableCoin.connect(defaultAdmin).freeze(sender.address);
+
+    await stableCoin.connect(defaultAdmin).setTransactionFeeEnabled(true);
+    await expect(
+       stableCoin
+        .connect(sender)
+        .transfer(recipient.address, transferAmount)
+    ).to.be.revertedWith("Sender account is frozen");
+  });
+
+  it("Should revert when the recipient's account is frozen", async function () {
+    const {
+      sender,
+      stableCoin,
+      recipient,
+      transferAmount,
+      defaultAdmin
+    } = await loadFixture(deployStableCoinFixture);
+
+    await stableCoin.connect(defaultAdmin).freeze(recipient.address);
+
+    await stableCoin.connect(defaultAdmin).setTransactionFeeEnabled(true);
+
+    await expect(
+       stableCoin
+        .connect(sender)
+        .transfer(recipient.address, transferAmount)
+    ).to.be.revertedWith("Recipient account is frozen");
+  });
+
+  it("Should emit Transfer event", async function () {
+    const {
+      sender,
+      stableCoin,
+      recipient,
+      transferAmount,
+      defaultAdmin
+    } = await loadFixture(deployStableCoinFixture);
+
+    await stableCoin.connect(defaultAdmin).setTransactionFeeEnabled(true);
+
+    await expect(stableCoin
+      .connect(sender)
+      .transfer(recipient.address, transferAmount)).to.emit(stableCoin, "Transfer");
+    
+  });
 });
-
-
