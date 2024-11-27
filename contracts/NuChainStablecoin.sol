@@ -559,12 +559,7 @@ contract NuChainStablecoin is
     }
 }
 
-/* Mintable reserve
-    remaining mintable
-    mint reserve
-    available to mint
-    mint capacity
-*/
+
 //USDT
 //USDC
 //BUSD

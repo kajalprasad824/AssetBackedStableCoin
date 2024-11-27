@@ -10,9 +10,9 @@ async function main() {
   const NuChainStableCoin = await upgrades.deployProxy(
     NuChainStablecoin,
     [
-      "Default ADmin Address",
-      "Reserve Auditor Adrress",
-      "Treasury wallet Address",
+      "0x4b6428460Dc6D016f8dcD8DF2612109539DC1562",
+      "0xbD7C5d7eE2c48815cd32ed4f1E925BeC1FEC1f37",
+      "0x4b6428460Dc6D016f8dcD8DF2612109539DC1562",
     ],
     {
       gasPrice: gas,

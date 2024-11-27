@@ -8,7 +8,7 @@ async function main() {
 
   const ReserveAuditor = await upgrades.deployProxy(
     reserveAuditor,
-    ["Give default admin address here"],
+    ["0x4b6428460Dc6D016f8dcD8DF2612109539DC1562"],
     {
       gasPrice: gas,
       initializer: "initialize",
