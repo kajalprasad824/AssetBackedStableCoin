@@ -7,13 +7,223 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 
-contract NuChainLiquidityPool is
+library SafeMath {
+    /**
+     * @dev Returns the addition of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryAdd(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            uint256 c = a + b;
+            if (c < a) return (false, 0);
+            return (true, c);
+        }
+    }
+
+    /**
+     * @dev Returns the subtraction of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function trySub(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            if (b > a) return (false, 0);
+            return (true, a - b);
+        }
+    }
+
+    /**
+     * @dev Returns the multiplication of two unsigned integers, with an overflow flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryMul(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+            // benefit is lost if 'b' is also tested.
+            // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522
+            if (a == 0) return (true, 0);
+            uint256 c = a * b;
+            if (c / a != b) return (false, 0);
+            return (true, c);
+        }
+    }
+
+    /**
+     * @dev Returns the division of two unsigned integers, with a division by zero flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryDiv(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            if (b == 0) return (false, 0);
+            return (true, a / b);
+        }
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers, with a division by zero flag.
+     *
+     * _Available since v3.4._
+     */
+    function tryMod(uint256 a, uint256 b) internal pure returns (bool, uint256) {
+        unchecked {
+            if (b == 0) return (false, 0);
+            return (true, a % b);
+        }
+    }
+
+    /**
+     * @dev Returns the addition of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `+` operator.
+     *
+     * Requirements:
+     *
+     * - Addition cannot overflow.
+     */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a + b;
+    }
+
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting on
+     * overflow (when the result is negative).
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     *
+     * - Subtraction cannot overflow.
+     */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a - b;
+    }
+
+    /**
+     * @dev Returns the multiplication of two unsigned integers, reverting on
+     * overflow.
+     *
+     * Counterpart to Solidity's `*` operator.
+     *
+     * Requirements:
+     *
+     * - Multiplication cannot overflow.
+     */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a * b;
+    }
+
+    /**
+     * @dev Returns the integer division of two unsigned integers, reverting on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `/` operator.
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a / b;
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * reverting when dividing by zero.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a % b;
+    }
+
+    /**
+     * @dev Returns the subtraction of two unsigned integers, reverting with custom message on
+     * overflow (when the result is negative).
+     *
+     * CAUTION: This function is deprecated because it requires allocating memory for the error
+     * message unnecessarily. For custom revert reasons use {trySub}.
+     *
+     * Counterpart to Solidity's `-` operator.
+     *
+     * Requirements:
+     *
+     * - Subtraction cannot overflow.
+     */
+    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+        unchecked {
+            require(b <= a, errorMessage);
+            return a - b;
+        }
+    }
+
+    /**
+     * @dev Returns the integer division of two unsigned integers, reverting with custom message on
+     * division by zero. The result is rounded towards zero.
+     *
+     * Counterpart to Solidity's `/` operator. Note: this function uses a
+     * `revert` opcode (which leaves remaining gas untouched) while Solidity
+     * uses an invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+        unchecked {
+            require(b > 0, errorMessage);
+            return a / b;
+        }
+    }
+
+    /**
+     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),
+     * reverting with custom message when dividing by zero.
+     *
+     * CAUTION: This function is deprecated because it requires allocating memory for the error
+     * message unnecessarily. For custom revert reasons use {tryMod}.
+     *
+     * Counterpart to Solidity's `%` operator. This function uses a `revert`
+     * opcode (which leaves remaining gas untouched) while Solidity uses an
+     * invalid opcode to revert (consuming all remaining gas).
+     *
+     * Requirements:
+     *
+     * - The divisor cannot be zero.
+     */
+    function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+        unchecked {
+            require(b > 0, errorMessage);
+            return a % b;
+        }
+    }
+}
+
+
+interface IERC20Metadata is IERC20 {
+    function decimals() external view returns (uint8);
+}
+
+contract NuCoinLiquidityPool is
     Initializable,
     PausableUpgradeable,
     AccessControlUpgradeable,
     ReentrancyGuardUpgradeable
 {
+
+    using SafeMath for uint256; 
+
     bytes32 public constant PAUSER_ROLE =
         keccak256(abi.encodePacked("PAUSER_ROLE"));
 
@@ -24,6 +234,7 @@ contract NuChainLiquidityPool is
     uint256 public totalLiquidityUSDN; // Total liquidity of Stablecoin A
     uint256 public totalLiquidityB; // Total liquidity of Stablecoin B
     uint256 public pegThreshold; // Threshold for triggering peg rebalance (in basis points)
+    uint8 private tokenBDecimal;
 
     struct LiquidityProviderInfo {
         uint256 liquidityUSDN; // Liquidity provided by users for USDN
@@ -88,6 +299,7 @@ contract NuChainLiquidityPool is
         tradingFee = _tradingFee; // Default fee: 0.3% = 30 basis points
         rewardRate = _rewardRate; // Reward rate for LPs
         pegThreshold = _pegThreshold; // Default threshold: 100 basis points (1%)
+        tokenBDecimal = IERC20Metadata(_stablecoinB).decimals();
 
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
     }
@@ -108,7 +320,7 @@ contract NuChainLiquidityPool is
     modifier rewardCooldown(address user) {
         LiquidityProviderInfo memory liquidity = liquidityProviderInfo[user];
         require(
-            block.timestamp >= liquidity.claimRewardLastTime + 1 days,
+            block.timestamp >= liquidity.claimRewardLastTime + 180,
             "Reward cooldown period not met"
         );
         _;
@@ -227,19 +439,18 @@ contract NuChainLiquidityPool is
         feeInUSDN = (amountIn * tradingFee) / 10000;
 
         uint256 amountInAfterFee = amountIn - feeInUSDN;
+         amountOut = denormalize(amountInAfterFee,tokenBDecimal);
             require(
-                totalLiquidityB >= amountInAfterFee,
+                totalLiquidityB >= amountOut,
                 "Insufficient liquidity for Stablecoin B"
             );
-            amountOut = amountInAfterFee; // Assuming a 1:1 peg between stablecoins
-            totalLiquidityUSDN += amountInAfterFee;
-            totalLiquidityUSDN += feeInUSDN;
+            totalLiquidityUSDN += amountIn;
             totalLiquidityB -= amountOut;
         } else {
 
-            
-            feeInUSDN = (amountIn * tradingFee) / 10000;
-            amountOut = amountIn - feeInUSDN;
+            uint normalizeTokenB = (normalize(amountIn,tokenBDecimal));
+            feeInUSDN = (normalizeTokenB * tradingFee) / 10000;
+            amountOut = normalizeTokenB - feeInUSDN;
 
         require(
             totalLiquidityUSDN >= amountOut,
@@ -272,11 +483,11 @@ contract NuChainLiquidityPool is
     function calculateReward(address user) public view returns (uint256) {
         LiquidityProviderInfo storage liquidity = liquidityProviderInfo[user];
         uint256 timeLapse = block.timestamp - liquidity.claimRewardLastTime;
-        uint256 numOfDays = timeLapse / 1 days;
+        uint256 numOfDays = timeLapse / 180;
         uint256 totalLiquidity = totalLiquidityUSDN + totalLiquidityB;
         require(totalLiquidity > 0, "No liquidity in pool");
 
-        uint256 userShare = ((liquidity.liquidityUSDN + liquidity.liquidityB) *
+        uint256 userShare = ((liquidity.liquidityUSDN + normalize(liquidity.liquidityB,tokenBDecimal)) *
             1e18) / totalLiquidity;
         uint256 totalUserShare = numOfDays * userShare;
         return (totalUserShare * rewardRate) / 1e18;
@@ -410,5 +621,13 @@ contract NuChainLiquidityPool is
             "Not Authorize to call this function"
         );
         _unpause();
+    }
+
+    function normalize(uint256 amount, uint256 decimals) internal pure returns (uint256) {
+        return amount.mul(1e18).div(10 ** decimals);
+    }
+
+    function denormalize(uint256 amount, uint256 decimals) internal pure returns (uint256) {
+        return amount.mul(10 ** decimals).div(1e18);
     }
 }
