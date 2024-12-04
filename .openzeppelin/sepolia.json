@@ -30,6 +30,11 @@
       "address": "0x65cFe70A93A0771D7bF7fc92C359b29386f63443",
       "txHash": "0x3ee5b6f43ff2f8bbcab92498d04bcfe0e6491f19508aa68424f351cbd12ec993",
       "kind": "transparent"
+    },
+    {
+      "address": "0xa9a30E88D38D535C68b4778332657cc0ea7ff69b",
+      "txHash": "0xe1dbea02b080d4cd453e6829a4fa6c71f7ae79d0895c7f16f66042a366d53ada",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -1140,6 +1145,275 @@
               }
             ],
             "numberOfBytes": "96"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.ReentrancyGuard": [
+            {
+              "contract": "ReentrancyGuardUpgradeable",
+              "label": "_status",
+              "type": "t_uint256",
+              "src": "@openzeppelin\\contracts-upgradeable\\utils\\ReentrancyGuardUpgradeable.sol:43",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.AccessControl": [
+            {
+              "contract": "AccessControlUpgradeable",
+              "label": "_roles",
+              "type": "t_mapping(t_bytes32,t_struct(RoleData)25_storage)",
+              "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:61",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Pausable": [
+            {
+              "contract": "PausableUpgradeable",
+              "label": "_paused",
+              "type": "t_bool",
+              "src": "@openzeppelin\\contracts-upgradeable\\utils\\PausableUpgradeable.sol:21",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "64b5a57a2534711606341ee1d8b656bcfc3c5d2987fba78a33b8f6da9f0e8649": {
+      "address": "0xC38f004DB1AB4AB8784033cc03aD47965ae47Ac5",
+      "txHash": "0xfc0c2c4052bcdb30babe099495c4cb3cb4e28fa3054dd804057b69814e1973d9",
+      "layout": {
+        "solcVersion": "0.8.27",
+        "storage": [
+          {
+            "label": "USDN",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_contract(IERC20)1168",
+            "contract": "NuChainLiquidityPool",
+            "src": "contracts\\NuChainLiquidityPool.sol:229"
+          },
+          {
+            "label": "stablecoinB",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(IERC20)1168",
+            "contract": "NuChainLiquidityPool",
+            "src": "contracts\\NuChainLiquidityPool.sol:230"
+          },
+          {
+            "label": "tradingFee",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint256",
+            "contract": "NuChainLiquidityPool",
+            "src": "contracts\\NuChainLiquidityPool.sol:231"
+          },
+          {
+            "label": "rewardRate",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_uint256",
+            "contract": "NuChainLiquidityPool",
+            "src": "contracts\\NuChainLiquidityPool.sol:232"
+          },
+          {
+            "label": "totalLiquidityUSDN",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_uint256",
+            "contract": "NuChainLiquidityPool",
+            "src": "contracts\\NuChainLiquidityPool.sol:233"
+          },
+          {
+            "label": "totalLiquidityB",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_uint256",
+            "contract": "NuChainLiquidityPool",
+            "src": "contracts\\NuChainLiquidityPool.sol:234"
+          },
+          {
+            "label": "pegThreshold",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_uint256",
+            "contract": "NuChainLiquidityPool",
+            "src": "contracts\\NuChainLiquidityPool.sol:235"
+          },
+          {
+            "label": "tokenBDecimal",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_uint8",
+            "contract": "NuChainLiquidityPool",
+            "src": "contracts\\NuChainLiquidityPool.sol:236"
+          },
+          {
+            "label": "liquidityProviderInfo",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_mapping(t_address,t_struct(LiquidityProviderInfo)1553_storage)",
+            "contract": "NuChainLiquidityPool",
+            "src": "contracts\\NuChainLiquidityPool.sol:244"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)25_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AccessControlStorage)35_storage": {
+            "label": "struct AccessControlUpgradeable.AccessControlStorage",
+            "members": [
+              {
+                "label": "_roles",
+                "type": "t_mapping(t_bytes32,t_struct(RoleData)25_storage)",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(InitializableStorage)161_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(PausableStorage)257_storage": {
+            "label": "struct PausableUpgradeable.PausableStorage",
+            "members": [
+              {
+                "label": "_paused",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(ReentrancyGuardStorage)334_storage": {
+            "label": "struct ReentrancyGuardUpgradeable.ReentrancyGuardStorage",
+            "members": [
+              {
+                "label": "_status",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(RoleData)25_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "hasRole",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_contract(IERC20)1168": {
+            "label": "contract IERC20",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_struct(LiquidityProviderInfo)1553_storage)": {
+            "label": "mapping(address => struct NuChainLiquidityPool.LiquidityProviderInfo)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(LiquidityProviderInfo)1553_storage": {
+            "label": "struct NuChainLiquidityPool.LiquidityProviderInfo",
+            "members": [
+              {
+                "label": "liquidityUSDN",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "liquidityB",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "claimRewardLastTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
           }
         },
         "namespaces": {

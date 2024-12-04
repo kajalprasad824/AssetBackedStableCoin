@@ -215,23 +215,22 @@ interface IERC20Metadata is IERC20 {
     function decimals() external view returns (uint8);
 }
 
-contract NuCoinLiquidityPool is
+contract NuChainLiquidityPool is
     Initializable,
     PausableUpgradeable,
     AccessControlUpgradeable,
     ReentrancyGuardUpgradeable
 {
-
-    using SafeMath for uint256; 
+    using SafeMath for uint256;
 
     bytes32 public constant PAUSER_ROLE =
         keccak256(abi.encodePacked("PAUSER_ROLE"));
 
-    IERC20 public USDN; // Stablecoin A (e.g., USDN)
-    IERC20 public stablecoinB; // Stablecoin B (e.g., USDT)
+    IERC20 public USDN; //(e.g., USDN)
+    IERC20 public stablecoinB; // Stablecoin  (e.g., USDT)
     uint256 public tradingFee; // Trading fee in basis points (100 = 1%)
     uint256 public rewardRate; // Reward rate for LPs
-    uint256 public totalLiquidityUSDN; // Total liquidity of Stablecoin A
+    uint256 public totalLiquidityUSDN; // Total liquidity of USDN
     uint256 public totalLiquidityB; // Total liquidity of Stablecoin B
     uint256 public pegThreshold; // Threshold for triggering peg rebalance (in basis points)
     uint8 private tokenBDecimal;
@@ -243,10 +242,6 @@ contract NuCoinLiquidityPool is
     }
 
     mapping(address => LiquidityProviderInfo) public liquidityProviderInfo;
-
-    // mapping(address => uint256) public liquidityUSDN; // Liquidity provided by users for Stablecoin A
-    // mapping(address => uint256) public liquidityB; // Liquidity provided by users for Stablecoin B
-    // mapping(address => uint256) public rewards; // Accumulated rewards for liquidity providers
 
     event LiquidityAdded(
         address indexed user,
@@ -288,7 +283,7 @@ contract NuCoinLiquidityPool is
 
         require(
             _tradingFee != 0 && _rewardRate != 0 && _pegThreshold != 0,
-            "Please check value og trading fee, reward rate and peg threshold"
+            "Please check value of trading fee, reward rate and peg threshold"
         );
         __Pausable_init();
         __AccessControl_init();
@@ -320,7 +315,7 @@ contract NuCoinLiquidityPool is
     modifier rewardCooldown(address user) {
         LiquidityProviderInfo memory liquidity = liquidityProviderInfo[user];
         require(
-            block.timestamp >= liquidity.claimRewardLastTime + 180,
+            block.timestamp >= liquidity.claimRewardLastTime + 1 days,
             "Reward cooldown period not met"
         );
         _;
@@ -336,11 +331,11 @@ contract NuCoinLiquidityPool is
         whenNotPaused
         nonReentrant
         validAmount(amountUSDN)
-        validAmount(amountB)     
+        validAmount(amountB)
     {
         require(
             USDN.transferFrom(msg.sender, address(this), amountUSDN),
-            "Stablecoin A transfer failed"
+            "USDN transfer failed"
         );
         require(
             stablecoinB.transferFrom(msg.sender, address(this), amountB),
@@ -353,12 +348,11 @@ contract NuCoinLiquidityPool is
 
         // Claim rewards if user already has liquidity
         if (liquidity.liquidityUSDN > 0 || liquidity.liquidityB > 0) {
-            uint totalReward = calculateReward(_msgSender());
+            uint256 totalReward = calculateReward(_msgSender());
             require(
-            USDN.transfer(msg.sender, totalReward),
-            "USDN transfer failed"
-        );
-
+                USDN.transfer(msg.sender, totalReward),
+                "USDN transfer failed"
+            );
         }
 
         liquidity.liquidityUSDN += amountUSDN;
@@ -390,12 +384,9 @@ contract NuCoinLiquidityPool is
             "Insufficient Stablecoin B balance"
         );
 
-        uint totalReward = calculateReward(_msgSender());
+        uint256 totalReward = calculateReward(_msgSender());
 
-        require(
-            USDN.transfer(msg.sender, totalReward),
-            "USDN transfer failed"
-        );
+        require(USDN.transfer(msg.sender, totalReward), "USDN transfer failed");
 
         liquidity.liquidityUSDN -= amountUSDN;
         liquidity.liquidityB -= amountB;
@@ -403,10 +394,7 @@ contract NuCoinLiquidityPool is
         totalLiquidityB -= amountB;
         liquidity.claimRewardLastTime = block.timestamp;
 
-        require(
-            USDN.transfer(msg.sender, amountUSDN),
-            "USDN transfer failed"
-        );
+        require(USDN.transfer(msg.sender, amountUSDN), "USDN transfer failed");
 
         require(
             stablecoinB.transfer(msg.sender, amountB),
@@ -424,22 +412,27 @@ contract NuCoinLiquidityPool is
         address tokenIn,
         address tokenOut,
         uint256 amountIn
-    ) external whenNotPaused nonReentrant validAmount(amountIn) returns (uint256 amountOut) {
+    )
+        external
+        whenNotPaused
+        nonReentrant
+        validAmount(amountIn)
+        returns (uint256 amountOut)
+    {
         require(
             (tokenIn == address(USDN) && tokenOut == address(stablecoinB)) ||
                 (tokenIn == address(stablecoinB) && tokenOut == address(USDN)),
             "Invalid token pair"
         );
 
-        uint feeInUSDN;
+        uint256 feeInUSDN;
 
         if (tokenIn == address(USDN)) {
-
             // Fee is directly deducted in USDN
-        feeInUSDN = (amountIn * tradingFee) / 10000;
+            feeInUSDN = (amountIn * tradingFee) / 10000;
 
-        uint256 amountInAfterFee = amountIn - feeInUSDN;
-         amountOut = denormalize(amountInAfterFee,tokenBDecimal);
+            uint256 amountInAfterFee = amountIn - feeInUSDN;
+            amountOut = denormalize(amountInAfterFee, tokenBDecimal);
             require(
                 totalLiquidityB >= amountOut,
                 "Insufficient liquidity for Stablecoin B"
@@ -447,23 +440,19 @@ contract NuCoinLiquidityPool is
             totalLiquidityUSDN += amountIn;
             totalLiquidityB -= amountOut;
         } else {
-
-            uint normalizeTokenB = (normalize(amountIn,tokenBDecimal));
+            uint256 normalizeTokenB = (normalize(amountIn, tokenBDecimal));
             feeInUSDN = (normalizeTokenB * tradingFee) / 10000;
             amountOut = normalizeTokenB - feeInUSDN;
 
-        require(
-            totalLiquidityUSDN >= amountOut,
-            "Insufficient liquidity for USDN"
-        );
+            require(
+                totalLiquidityUSDN >= amountOut,
+                "Insufficient liquidity for USDN"
+            );
 
-        
-        totalLiquidityB += amountIn; // Add incoming stablecoinB
-        totalLiquidityUSDN -= amountOut; // Deduct USDN after fee
-
+            totalLiquidityB += amountIn; // Add incoming stablecoinB
+            totalLiquidityUSDN -= amountOut; // Deduct USDN after fee
         }
 
-    
         require(
             IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn),
             "Input token transfer failed"
@@ -483,17 +472,23 @@ contract NuCoinLiquidityPool is
     function calculateReward(address user) public view returns (uint256) {
         LiquidityProviderInfo storage liquidity = liquidityProviderInfo[user];
         uint256 timeLapse = block.timestamp - liquidity.claimRewardLastTime;
-        uint256 numOfDays = timeLapse / 180;
+        uint256 numOfDays = timeLapse / 1 days;
         uint256 totalLiquidity = totalLiquidityUSDN + totalLiquidityB;
         require(totalLiquidity > 0, "No liquidity in pool");
 
-        uint256 userShare = ((liquidity.liquidityUSDN + normalize(liquidity.liquidityB,tokenBDecimal)) *
-            1e18) / totalLiquidity;
+        uint256 userShare = ((liquidity.liquidityUSDN +
+            normalize(liquidity.liquidityB, tokenBDecimal)) * 1e18) /
+            totalLiquidity;
         uint256 totalUserShare = numOfDays * userShare;
         return (totalUserShare * rewardRate) / 1e18;
     }
 
-    function claimReward() public whenNotPaused nonReentrant rewardCooldown(_msgSender()){
+    function claimReward()
+        public
+        whenNotPaused
+        nonReentrant
+        rewardCooldown(_msgSender())
+    {
         LiquidityProviderInfo storage liquidity = liquidityProviderInfo[
             _msgSender()
         ];
@@ -519,7 +514,10 @@ contract NuCoinLiquidityPool is
         return true; // Peg is within acceptable range
     }
 
-    function rebalancePeg(uint256 amount, bool isAddLiquidityToUSDN) external onlyRole(DEFAULT_ADMIN_ROLE){
+    function rebalancePeg(uint256 amount, bool isAddLiquidityToUSDN)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         if (isAddLiquidityToUSDN) {
             require(
                 totalLiquidityB >= amount,
@@ -527,11 +525,11 @@ contract NuCoinLiquidityPool is
             );
             totalLiquidityUSDN += amount;
             totalLiquidityB -= amount;
-            emit PegRebalanced(amount, "Added to Stablecoin A");
+            emit PegRebalanced(amount, "Added to USDN");
         } else {
             require(
                 totalLiquidityUSDN >= amount,
-                "Insufficient Stablecoin A liquidity"
+                "Insufficient USDN liquidity"
             );
             totalLiquidityB += amount;
             totalLiquidityUSDN -= amount;
@@ -576,10 +574,9 @@ contract NuCoinLiquidityPool is
             "Emergency withdrawal failed"
         );
 
-        if(token == address(USDN)){
+        if (token == address(USDN)) {
             totalLiquidityUSDN -= amount;
-        }
-        else{
+        } else {
             totalLiquidityB -= amount;
         }
     }
@@ -614,7 +611,7 @@ contract NuCoinLiquidityPool is
         _pause();
     }
 
-    function unpause() public onlyRole(PAUSER_ROLE) {
+    function unpause() public {
         require(
             hasRole(DEFAULT_ADMIN_ROLE, _msgSender()) ||
                 hasRole(PAUSER_ROLE, _msgSender()),
@@ -623,11 +620,19 @@ contract NuCoinLiquidityPool is
         _unpause();
     }
 
-    function normalize(uint256 amount, uint256 decimals) internal pure returns (uint256) {
-        return amount.mul(1e18).div(10 ** decimals);
+    function normalize(uint256 amount, uint256 decimals)
+        internal
+        pure
+        returns (uint256)
+    {
+        return amount.mul(1e18).div(10**decimals);
     }
 
-    function denormalize(uint256 amount, uint256 decimals) internal pure returns (uint256) {
-        return amount.mul(10 ** decimals).div(1e18);
+    function denormalize(uint256 amount, uint256 decimals)
+        internal
+        pure
+        returns (uint256)
+    {
+        return amount.mul(10**decimals).div(1e18);
     }
 }
