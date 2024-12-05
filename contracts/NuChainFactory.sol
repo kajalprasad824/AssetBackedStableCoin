@@ -26,8 +26,10 @@ contract NuChainFactory is
     }
     mapping(address stablecoin => PoolInfo) public poolInfo;
 
-    address[] public stablecoins;
-    address[] public liquidityPools;
+    address[] private stablecoins;
+    address[] private liquidityPools;
+
+    event PoolCreated(address indexed stablecoin, address indexed pool);
 
     function initialize(
         address _defaultAdmin,
@@ -58,6 +60,8 @@ contract NuChainFactory is
 
         stablecoins.push(_stablecoin);
         liquidityPools.push(newPool);
+
+        emit PoolCreated(_stablecoin,newPool);
         
     }
 
