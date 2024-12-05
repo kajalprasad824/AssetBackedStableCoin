@@ -470,7 +470,7 @@ contract NuChainLiquidityPool is
     // =======================
 
     function calculateReward(address user) public view returns (uint256) {
-        LiquidityProviderInfo storage liquidity = liquidityProviderInfo[user];
+        LiquidityProviderInfo memory liquidity = liquidityProviderInfo[user];
         uint256 timeLapse = block.timestamp - liquidity.claimRewardLastTime;
         uint256 numOfDays = timeLapse / 1 days;
         uint256 totalLiquidity = totalLiquidityUSDN + totalLiquidityB;
