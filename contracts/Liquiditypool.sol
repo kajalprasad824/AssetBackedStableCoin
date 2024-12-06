@@ -4,16 +4,16 @@ pragma solidity ^0.8.22;
 
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-// import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-// import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
+/// Interface to fetch decimal of stablecoin
 interface IERC20Metadata is IERC20 {
     function decimals() external view returns (uint8);
 }
 
+/// Interface for the factory contract
 interface INuChainFactory {
     function tradingFee() external view returns (uint256);
 
@@ -36,32 +36,29 @@ interface INuChainFactory {
 
 contract Liquiditypool is
     Initializable,
-    // PausableUpgradeable,
     AccessControlUpgradeable,
     ReentrancyGuardUpgradeable
 {
-    // using SafeMath for uint256;
+    
+    IERC20 public USDN; /// USDN contract address
+    IERC20 public stablecoin;  ///Paired stablecoin contract address
+    INuChainFactory public factory; /// NuChain Factory contract address
 
-    bytes32 public constant PAUSER_ROLE =
-        keccak256(abi.encodePacked("PAUSER_ROLE"));
+    uint256 public totalLiquidityUSDN; /// Returns the value of total liquidity of USDN
+    uint256 public totalLiquidityStablecoin; ///Returns the value of total liquidity of paired stablecoin
 
-    IERC20 public USDN;
-    IERC20 public stablecoin;
-    INuChainFactory public factory;
+    uint8 private stablecoinDecimal; /// Stores the decimal of paired stablecoin
 
-    uint256 public totalLiquidityUSDN;
-    uint256 public totalLiquidityStablecoin;
-
-    uint8 private stablecoinDecimal;
-
+    /// @struct store the info of Liquidity provider
     struct LiquidityProviderInfo {
         uint256 liquidityUSDN;
         uint256 liquidityStablecoin;
         uint256 rewardLastTime;
     }
-
+    /// Liquidity Provider => Liquidity Provider Info
     mapping(address => LiquidityProviderInfo) public liquidityProviderInfo;
 
+    /// Events of the contract
     event LiquidityAdded(
         address indexed user,
         uint256 amountUSDN,
@@ -91,6 +88,14 @@ contract Liquiditypool is
     //     _disableInitializers();
     // }
 
+    /* 
+         @notice initialize the function
+         @param _defaultAdmin Default Admin of the contract
+         @param _USDN contract address of USDN
+         @param _stablecoin paired stable coin contract address
+         @param _factory NuChain Factory contract address
+
+    */
     function initialize(
         address _defaultAdmin,
         address _USDN,
@@ -102,7 +107,6 @@ contract Liquiditypool is
             "USDN or stablecoin address can't be zero"
         );
 
-        // __Pausable_init();
         __AccessControl_init();
         __ReentrancyGuard_init();
 
@@ -120,6 +124,7 @@ contract Liquiditypool is
         _;
     }
 
+    //Modifier to ensure reward period is complete 
     modifier rewardCoolDown(address _user) {
         LiquidityProviderInfo memory liquidity = liquidityProviderInfo[_user];
         require(
@@ -130,6 +135,7 @@ contract Liquiditypool is
         _;
     }
 
+    //Modifier to ensure that liquidity pool is not paused
     modifier whenPoolNotPaused() {
         require(factory.paused() == false, "Liquidity Pools are paused");
         _;
@@ -139,7 +145,11 @@ contract Liquiditypool is
     // Liquidity Management
     // ======================
 
-    //Add Liquidity to the pool
+    /*
+        @notice Add Liquidity to the pool
+        @param _amountUSDN USDN amount that user want to add
+        @param _amountStablecoin amount of paired stablecoin that user want to add
+    */
     function addLiquidity(uint256 _amountUSDN, uint256 _amountStablecoin)
         external
         whenPoolNotPaused
@@ -184,7 +194,11 @@ contract Liquiditypool is
         emit LiquidityAdded(msg.sender, _amountUSDN, _amountStablecoin);
     }
 
-    //Remove Liquidity From The Pool
+    /*
+        @notice Add Liquidity to the pool
+        @param _amountUSDN USDN amount that user want to remove
+        @param _amountStablecoin amount of paired stablecoin that user want to remove
+    */
     function removeLiquidity(uint256 _amountUSDN, uint256 _amountStablecoin)
         external
         whenPoolNotPaused
@@ -230,6 +244,12 @@ contract Liquiditypool is
     // Trading(Swapping)
     //=====================
 
+    /*
+        @notice Swapping of stablecoins
+        @param _tokenIn Address of the token you want to swap in
+        @param _tokenOut Address of the token you want to swap out
+        @param _amountIn Amount of token you want to swap
+    */
     function swap(
         address _tokenIn,
         address _tokenOut,
@@ -259,7 +279,9 @@ contract Liquiditypool is
             );
 
             require(totalLiquidityStablecoin >= _amountOut, "Insufficient Liquidty for Stablecoin");
-
+            totalLiquidityStablecoin -= _amountOut;
+            totalLiquidityUSDN += _amountIn;
+ 
         }else {
             uint256 normalizeStablecoin = factory.normalize(_amountIn, stablecoinDecimal);
             feeInUSDN = (normalizeStablecoin * factory.tradingFee()) / 10000;
@@ -267,12 +289,12 @@ contract Liquiditypool is
             _amountOut = normalizeStablecoin - feeInUSDN;
 
             require(totalLiquidityUSDN >= _amountOut, "Insufficient Liquidity for USDN"); 
+
+            totalLiquidityStablecoin += _amountIn;
+            totalLiquidityUSDN -= _amountOut;
         }
 
-        totalLiquidityStablecoin += _amountIn;
-        totalLiquidityUSDN -= _amountOut;
-
-        require(IERC20(_tokenIn).transferFrom(msg.sender,address(this),_amountOut), "Input token transfer failed");
+        require(IERC20(_tokenIn).transferFrom(msg.sender,address(this),_amountIn), "Input token transfer failed");
         require(IERC20(_tokenOut).transfer(msg.sender,_amountOut),"Output token transfer failed");
 
         emit Swapped(msg.sender, _tokenIn, _tokenOut, _amountIn,_amountOut);
@@ -282,6 +304,12 @@ contract Liquiditypool is
     // ====================
     // Reward Management
     // ====================
+
+    /*
+        @notice Fuction to calculate the reward
+        @param _user address of the liquidity provider for which we want to calculate reward
+        @returns reward of the liquidity provider
+    */
 
     function calculateReward(address _user) public view returns (uint256) {
         LiquidityProviderInfo memory liquidity = liquidityProviderInfo[_user];
@@ -303,6 +331,9 @@ contract Liquiditypool is
         return (totalUserShare * factory.rewardRate()) / 1e18;
     }
 
+    /*
+        @notice Fuction to claim the reward
+    */
     function claimReward() external whenPoolNotPaused nonReentrant rewardCoolDown(msg.sender){
         LiquidityProviderInfo storage liquidity = liquidityProviderInfo[
             _msgSender()
@@ -322,6 +353,12 @@ contract Liquiditypool is
     // Peg Rebalancing
     // =======================
 
+    /*
+        @notice function to rebalance the liquidity pool
+        @param _amount The amount default admin want to add
+        @param isAddLiquidityToUSDN true if want to add USDN else false
+        only default admin can call this function
+    */
     function rebalancePeg(uint _amount, bool isAddLiquidityToUSDN) external onlyRole(DEFAULT_ADMIN_ROLE){
         if(isAddLiquidityToUSDN) {
             require(USDN.transferFrom(msg.sender,address(this),_amount),"USDN transfer failed");
@@ -334,7 +371,10 @@ contract Liquiditypool is
         }
     }
 
-    // Function to withdraw token
+    /*
+        @notice function to withdraw the token
+        only default admin can call this function
+    */
     function withdrawToken(address _to,address _token,uint256 _amount) external onlyRole(DEFAULT_ADMIN_ROLE){
         require(
             IERC20(_token).transfer(_to, _amount),
